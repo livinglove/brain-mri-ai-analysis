@@ -1,3 +1,4 @@
+
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
 import { getNormativeValue } from './normativeData';
 
@@ -59,11 +60,17 @@ function analyzeRegion(region: BrainRegion): AnalysisResult {
     const deviation = (region.totalVolume - region.normativeValue) / region.standardDeviation;
     result.deviationScore = parseFloat(deviation.toFixed(2));
     
+    // Fix: Properly determine if volume is atrophied or enlarged
+    // If the volume is less than normative, consider atrophy (negative deviation)
+    // If the volume is greater than normative, consider enlargement (positive deviation)
     if (deviation <= -SD_THRESHOLD) {
       result.status = 'atrophied';
     } else if (deviation >= SD_THRESHOLD) {
       result.status = 'enlarged';
     }
+
+    // Add console logging to help debug
+    console.log(`Region ${region.name}: Volume=${region.totalVolume}, Norm=${region.normativeValue}, SD=${region.standardDeviation}, Deviation=${deviation}, Status=${result.status}`);
   }
   
   // Check for asymmetry if we have left and right volumes
