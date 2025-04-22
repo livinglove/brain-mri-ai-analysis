@@ -14,10 +14,13 @@ interface PDFUploaderProps {
 const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [rawText, setRawText] = useState<string>('');
+  const [showDebug, setShowDebug] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
+      setRawText(''); // Reset raw text when a new file is selected
     }
   };
 
@@ -38,12 +41,13 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
           // In reality, we'd parse the PDF properly
           // For demo purposes, we'll just use the raw text
           const text = e.target?.result as string || "";
+          setRawText(text);
           
           // Extract data from PDF text
           const extractedData = extractDataFromPDFText(text);
           
           if (Object.keys(extractedData).length > 0 && extractedData.brainRegions && extractedData.brainRegions.length > 0) {
-            toast.success("Data extracted successfully from NeuroQuant Morphometry report");
+            toast.success("Data extracted successfully from NeuroQuant report");
             onDataExtracted(extractedData);
           } else {
             toast.error("Could not find NeuroQuant Morphometry data in this PDF");
@@ -69,6 +73,10 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
       toast.error("Error uploading PDF");
       setIsLoading(false);
     }
+  };
+
+  const toggleDebug = () => {
+    setShowDebug(!showDebug);
   };
 
   return (
@@ -98,7 +106,14 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
           </label>
         </div>
         
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          <Button 
+            onClick={toggleDebug}
+            variant="outline"
+            size="sm"
+          >
+            {showDebug ? "Hide Debug" : "Show Debug"}
+          </Button>
           <Button 
             onClick={extractText}
             disabled={!file || isLoading}
@@ -107,6 +122,15 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
             {isLoading ? "Processing..." : "Extract Data"}
           </Button>
         </div>
+
+        {showDebug && rawText && (
+          <div className="mt-4 border rounded-md p-3">
+            <h4 className="font-medium mb-2">Extracted Text Preview</h4>
+            <div className="max-h-60 overflow-y-auto bg-gray-50 p-2 text-xs font-mono">
+              <pre>{rawText}</pre>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
