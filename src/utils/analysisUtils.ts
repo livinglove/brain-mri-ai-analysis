@@ -1,4 +1,3 @@
-
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
 
 // Standard deviation threshold for abnormality
@@ -85,46 +84,87 @@ function analyzeRegion(region: BrainRegion): AnalysisResult {
 
 /**
  * Extract brain region data from PDF text
- * (Simplified placeholder - would need a real PDF parsing library)
+ * Specifically looks for the NeuroQuant Morphometry page
  */
 export function extractDataFromPDFText(text: string): Partial<PatientData> {
-  // This is a placeholder implementation
-  // In a real implementation, we'd use regex patterns to extract data
-  
   try {
-    // Example extraction pattern for demonstration
-    const patientIdMatch = text.match(/Patient ID:\s*([A-Z0-9]+)/i);
+    // Look for the NeuroQuant Morphometry section
+    if (!text.includes("NeuroQuant Morphometry")) {
+      console.log("NeuroQuant Morphometry section not found in the PDF");
+      return {};
+    }
+    
+    // Extract patient information
+    const patientIdMatch = text.match(/Patient\s*ID:\s*([A-Z0-9-]+)/i);
     const ageMatch = text.match(/Age:\s*(\d+)/i);
-    const sexMatch = text.match(/Sex:\s*(male|female)/i);
+    const sexMatch = text.match(/Sex:\s*(Male|Female|M|F)/i);
     
-    // Very simplified brain region extraction (would be much more complex in reality)
-    const brainRegions: BrainRegion[] = [];
+    let sex: 'male' | 'female' = 'male';
+    if (sexMatch) {
+      const sexValue = sexMatch[1].toLowerCase();
+      sex = sexValue === 'female' || sexValue === 'f' ? 'female' : 'male';
+    }
     
-    // Extremely simplified parsing for demonstration purposes
-    // In reality, this would be much more robust and use proper regex patterns
+    // Find the start of the morphometry data table
+    // This is more robust than the previous approach
+    const morphometryLines: string[] = [];
     const lines = text.split('\n');
-    lines.forEach(line => {
-      // Example pattern: Hippocampus 2.5 2.3 4.8 5.2 0.4
-      const regionMatch = line.match(/([A-Za-z\s]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)/);
-      if (regionMatch) {
+    let inMorphometrySection = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Look for the section header or table headers that indicate we're in the morphometry section
+      if (line.includes("NeuroQuant Morphometry") || 
+          (line.includes("Structure") && 
+           line.includes("Left") && 
+           line.includes("Right") && 
+           line.includes("Total") && 
+           line.includes("Norm"))) {
+        inMorphometrySection = true;
+        continue;
+      }
+      
+      // If we're in the morphometry section, collect lines until we hit a likely end marker
+      if (inMorphometrySection) {
+        // Empty lines or section breaks often indicate end of a table
+        if (line === '' || line.includes("Page") || line.includes("Report")) {
+          // Skip empty lines but don't end the section
+          if (line === '') continue;
+          
+          // Other markers likely mean end of section
+          inMorphometrySection = false;
+          continue;
+        }
+        
+        morphometryLines.push(line);
+      }
+    }
+    
+    // Parse the collected morphometry lines into brain region data
+    const brainRegions: BrainRegion[] = [];
+    const regionPattern = /([A-Za-z\s\-]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)\s+([\d\.]+)/;
+    
+    for (const line of morphometryLines) {
+      const match = line.match(regionPattern);
+      if (match) {
         brainRegions.push({
-          name: regionMatch[1].trim(),
-          leftVolume: parseFloat(regionMatch[2]),
-          rightVolume: parseFloat(regionMatch[3]),
-          totalVolume: parseFloat(regionMatch[4]),
-          normativeValue: parseFloat(regionMatch[5]),
-          standardDeviation: parseFloat(regionMatch[6])
+          name: match[1].trim(),
+          leftVolume: parseFloat(match[2]),
+          rightVolume: parseFloat(match[3]),
+          totalVolume: parseFloat(match[4]),
+          normativeValue: parseFloat(match[5]),
+          standardDeviation: parseFloat(match[6])
         });
       }
-    });
+    }
     
     return {
       patientId: patientIdMatch ? patientIdMatch[1] : '',
       age: ageMatch ? parseInt(ageMatch[1]) : 0,
-      sex: sexMatch ? (sexMatch[1].toLowerCase() as 'male' | 'female') : 'male',
+      sex: sex,
       brainRegions
     };
-    
   } catch (error) {
     console.error("Error extracting data from PDF text:", error);
     return {};
