@@ -1,14 +1,12 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BrainRegion, PatientData } from '@/types/brainData';
 import { sampleNormativeData } from '@/utils/analysisUtils';
 import { toast } from 'sonner';
 import PatientInfoForm from "./PatientInfoForm";
-import BrainRegionTable from "./BrainRegionTable";
+import BrainRegionInputTable from "./BrainRegionInputTable";
 
 interface DataEntryFormProps {
   onDataSubmit: (data: PatientData) => void;
@@ -111,7 +109,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
           onAgeChange={setAge}
           onSexChange={setSex}
         />
-        <BrainRegionTable
+        <BrainRegionInputTable
           regions={brainRegions}
           lhColor={LH_INPUT_COLOR}
           rhColor={RH_INPUT_COLOR}
