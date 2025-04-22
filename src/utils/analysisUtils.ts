@@ -216,6 +216,19 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
       }
     }
     
+    // Define a mapping from raw extracted names to new names
+    const regionNameMap: { [key: string]: string } = {
+      "Forebrain": "Forebrain Parenchyma",
+      "Cortical Gray": "Cortical Gray Matter",
+      "Cortical Grey": "Cortical Gray Matter",
+      "Hippocampus": "Hippocampi",
+      "Amygdala": "Amydalae",
+      "Caudate": "Caudates",
+      "Putamen": "Putamina",
+      "Pallidum": "Pallidums",
+      "Thalamus": "Thalami"
+    };
+    
     // Parse the collected data into brain region objects
     const brainRegions: BrainRegion[] = [];
     
@@ -254,7 +267,12 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
         console.log(`Matched pattern ${patternUsed}:`, match);
         
         // Extract the name and clean it up
-        const name = match[1].trim();
+        let name = match[1].trim();
+        // Map to new region name if available
+        const mappedNameKey = Object.keys(regionNameMap).find(k =>
+          name.toLowerCase().includes(k.toLowerCase())
+        );
+        if (mappedNameKey) name = regionNameMap[mappedNameKey];
         
         // Skip lines that don't look like brain regions
         if (name.length < 3 || name.match(/^[0-9\s]+$/)) {
@@ -263,7 +281,6 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
         }
         
         if (patternUsed === 1 || patternUsed === 3) {
-          // Full data with left/right hemispheres
           brainRegions.push({
             name: name,
             leftVolume: parseFloat(match[2]),
@@ -273,7 +290,6 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
             standardDeviation: parseFloat(match[6])
           });
         } else if (patternUsed === 2) {
-          // Data with only total volume (no left/right)
           brainRegions.push({
             name: name,
             totalVolume: parseFloat(match[2]),
@@ -303,46 +319,68 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
   }
 }
 
-// Create sample normative data that aligns with our knowledge base
+// Replace sampleNormativeData to match new order, names, and values per your knowledgebase:
 export const sampleNormativeData: BrainRegion[] = [
   {
-    name: "Hippocampus",
-    normativeValue: 0.27,
-    standardDeviation: 0.03
-  },
-  {
-    name: "Amygdala",
-    normativeValue: 0.11,
-    standardDeviation: 0.02
-  },
-  {
-    name: "Thalamus",
-    normativeValue: 0.54,
-    standardDeviation: 0.05
-  },
-  {
-    name: "Caudate",
-    normativeValue: 0.26,
-    standardDeviation: 0.03
-  },
-  {
-    name: "Putamen",
-    normativeValue: 0.36,
-    standardDeviation: 0.04
-  },
-  {
-    name: "Pallidum",
-    normativeValue: 0.06,
-    standardDeviation: 0.01
-  },
-  {
-    name: "Forebrain",
+    name: "Forebrain Parenchyma",
     normativeValue: 32.52,
     standardDeviation: 2.5
   },
   {
-    name: "Cortical Gray",
+    name: "Cortical Gray Matter",
     normativeValue: 16.56,
     standardDeviation: 1.5
+  },
+  {
+    name: "Hippocampi",
+    normativeValue: 0.27,
+    standardDeviation: 0.03
+  },
+  {
+    name: "Amydalae",
+    normativeValue: 0.11,
+    standardDeviation: 0.02
+  },
+  {
+    name: "Caudates",
+    normativeValue: 0.26,
+    standardDeviation: 0.03
+  },
+  {
+    name: "Putamina",
+    normativeValue: 0.36,
+    standardDeviation: 0.04
+  },
+  {
+    name: "Pallidums",
+    normativeValue: 0.06,
+    standardDeviation: 0.01
+  },
+  {
+    name: "Thalami",
+    normativeValue: 0.54,
+    standardDeviation: 0.05
   }
 ];
+
+// Helper function for mapping new display names back to knowledgebase keys for age adjustment
+function getKnowledgeBaseKey(regionDisplayName: string): string | undefined {
+  const reverseMap: { [key: string]: string } = {
+    "Forebrain Parenchyma": "Forebrain",
+    "Cortical Gray Matter": "Cortical Gray",
+    "Hippocampi": "Hippocampus",
+    "Amydalae": "Amygdala",
+    "Caudates": "Caudate",
+    "Putamina": "Putamen",
+    "Pallidums": "Pallidum",
+    "Thalami": "Thalamus"
+  };
+  return reverseMap[regionDisplayName];
+}
+
+// Patch dataEntryForm norm updating helper by exporting this for outside usage:
+export function getAgeAdjustedNorm(regionDisplayName: string, age: number): number | undefined {
+  const kbKey = getKnowledgeBaseKey(regionDisplayName);
+  if (!kbKey) return undefined;
+  return getNormativeValue(kbKey, age);
+}
