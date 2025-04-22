@@ -2,6 +2,7 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { BrainRegion } from "@/types/brainData";
+import { Badge } from "@/components/ui/badge";
 
 interface BrainRegionInputRowProps {
   region: BrainRegion;
@@ -46,14 +47,20 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
           placeholder="Total"
         />
       </div>
-      <div className="col-span-2">
+      <div className="col-span-2 relative">
         <Input
           type="number"
           step="0.01"
           value={region.normativeValue}
           onChange={e => onChange(index, "normativeValue", e.target.value)}
           placeholder="Norm"
+          className={region.ageAdjusted ? "border-green-500" : ""}
         />
+        {region.ageAdjusted && (
+          <Badge className="absolute -top-2 -right-2 bg-green-500" variant="outline">
+            Age adjusted
+          </Badge>
+        )}
       </div>
       <div className="col-span-1">
         <Input

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { extractDataFromPDFText } from '@/utils/analysisUtils';
+import { getNormativeValue } from '@/utils/normativeData';
 import { PatientData } from '@/types/brainData';
 import { Upload } from 'lucide-react';
 
@@ -47,6 +48,22 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
           const extractedData = extractDataFromPDFText(text);
           
           if (Object.keys(extractedData).length > 0 && extractedData.brainRegions && extractedData.brainRegions.length > 0) {
+            // Apply age-adjusted normative values if age is available
+            if (extractedData.age) {
+              const age = extractedData.age;
+              extractedData.brainRegions = extractedData.brainRegions.map(region => {
+                const normValue = getNormativeValue(region.name, age);
+                if (normValue !== undefined) {
+                  return {
+                    ...region,
+                    normativeValue: normValue,
+                    ageAdjusted: true
+                  };
+                }
+                return region;
+              });
+            }
+            
             toast.success("Data extracted successfully from NeuroQuant report");
             onDataExtracted(extractedData);
           } else {
@@ -84,7 +101,7 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
       <CardHeader>
         <CardTitle>Upload NeuroQuant Report</CardTitle>
         <CardDescription>
-          Upload a PDF report to automatically extract brain region data from the NeuroQuant Morphometry page
+          Enter data manually or upload a PDF report to automatically extract brain region data
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

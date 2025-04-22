@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { BrainRegion, PatientData } from '@/types/brainData';
 import { sampleNormativeData } from '@/utils/analysisUtils';
+import { getNormativeValue } from '@/utils/normativeData';
 import { toast } from 'sonner';
 import PatientInfoForm from "./PatientInfoForm";
 import BrainRegionInputTable from "./BrainRegionInputTable";
@@ -29,6 +30,22 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         totalVolume: undefined,
       }))
   );
+
+  // Update normative values when age changes
+  useEffect(() => {
+    if (age && !isNaN(parseInt(age))) {
+      const currentAge = parseInt(age);
+      const updatedRegions = brainRegions.map(region => {
+        const normValue = getNormativeValue(region.name, currentAge);
+        return {
+          ...region,
+          normativeValue: normValue !== undefined ? normValue : region.normativeValue,
+          ageAdjusted: normValue !== undefined
+        };
+      });
+      setBrainRegions(updatedRegions);
+    }
+  }, [age]);
 
   const handleRegionChange = (index: number, field: keyof BrainRegion, value: string) => {
     const newRegions = [...brainRegions];
@@ -92,6 +109,10 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
     onDataSubmit(patientData);
   };
 
+  const handleAgeChange = (newAge: string) => {
+    setAge(newAge);
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -106,7 +127,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
           age={age}
           sex={sex}
           onPatientIdChange={setPatientId}
-          onAgeChange={setAge}
+          onAgeChange={handleAgeChange}
           onSexChange={setSex}
         />
         <BrainRegionInputTable

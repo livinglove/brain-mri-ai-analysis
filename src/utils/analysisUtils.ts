@@ -1,5 +1,5 @@
-
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
+import { getNormativeValue } from './normativeData';
 
 // Standard deviation threshold for abnormality
 const SD_THRESHOLD = 2.0;
@@ -303,71 +303,46 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
   }
 }
 
-// Sample normative data for common brain regions
+// Create sample normative data that aligns with our knowledge base
 export const sampleNormativeData: BrainRegion[] = [
   {
     name: "Hippocampus",
-    normativeValue: 4.2,
-    standardDeviation: 0.4
+    normativeValue: 0.27,
+    standardDeviation: 0.03
   },
   {
     name: "Amygdala",
-    normativeValue: 2.5,
-    standardDeviation: 0.3
+    normativeValue: 0.11,
+    standardDeviation: 0.02
   },
   {
     name: "Thalamus",
-    normativeValue: 12.1,
-    standardDeviation: 1.2
+    normativeValue: 0.54,
+    standardDeviation: 0.05
   },
   {
     name: "Caudate",
-    normativeValue: 7.8,
-    standardDeviation: 0.9
+    normativeValue: 0.26,
+    standardDeviation: 0.03
   },
   {
     name: "Putamen",
-    normativeValue: 9.4,
-    standardDeviation: 1.1
+    normativeValue: 0.36,
+    standardDeviation: 0.04
   },
   {
     name: "Pallidum",
-    normativeValue: 3.5,
-    standardDeviation: 0.4
+    normativeValue: 0.06,
+    standardDeviation: 0.01
   },
   {
-    name: "Brainstem",
-    normativeValue: 20.5,
-    standardDeviation: 2.2
+    name: "Forebrain",
+    normativeValue: 32.52,
+    standardDeviation: 2.5
   },
   {
-    name: "Cerebellum",
-    normativeValue: 130.0,
-    standardDeviation: 15.0
-  },
-  {
-    name: "Ventricles",
-    normativeValue: 22.0,
-    standardDeviation: 8.0
-  },
-  {
-    name: "Frontal Lobe",
-    normativeValue: 210.0,
-    standardDeviation: 25.0
-  },
-  {
-    name: "Temporal Lobe",
-    normativeValue: 135.0,
-    standardDeviation: 18.0
-  },
-  {
-    name: "Parietal Lobe",
-    normativeValue: 125.0,
-    standardDeviation: 16.0
-  },
-  {
-    name: "Occipital Lobe",
-    normativeValue: 75.0,
-    standardDeviation: 10.0
+    name: "Cortical Gray",
+    normativeValue: 16.56,
+    standardDeviation: 1.5
   }
 ];
