@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BrainRegion, PatientData } from '@/types/brainData';
 import { sampleNormativeData } from '@/utils/analysisUtils';
@@ -31,7 +30,6 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
       totalVolume: undefined
     }))
   );
-  const [activeTab, setActiveTab] = useState<'volume' | 'laterality'>("volume");
 
   const handleRegionChange = (index: number, field: keyof BrainRegion, value: string) => {
     const newRegions = [...brainRegions];
@@ -51,7 +49,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
           newRegions[index].totalVolume = undefined;
         }
       }
-      // Changing totalVolume does not alter LH/RH
+      // Changing totalVolume does not alter LH/RH (but totalVolume input will not be shown)
     } else {
       newRegions[index] = {
         ...newRegions[index],
@@ -138,146 +136,69 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
             </Select>
           </div>
         </div>
-        {/* Brain Region Data Entry */}
-        <Tabs value={activeTab} onValueChange={val => setActiveTab(val as 'volume' | 'laterality')} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="volume">Total Volume</TabsTrigger>
-            <TabsTrigger value="laterality">Left/Right Volumes</TabsTrigger>
-          </TabsList>
-
-          {/* Total Volume Tab with LH/RH */}
-          <TabsContent value="volume" className="mt-4">
-            <div className="space-y-4">
-              <div className="grid grid-cols-14 gap-4 font-bold text-sm bg-gray-100 p-2 rounded">
-                <div className="col-span-3">Brain Region</div>
-                <div className="col-span-2 text-center">LH (cm³)</div>
-                <div className="col-span-2 text-center">RH (cm³)</div>
-                <div className="col-span-2 text-center">Total (cm³)</div>
-                <div className="col-span-3 text-center">Normative (cm³)</div>
-                <div className="col-span-2 text-center">SD</div>
+        {/* Brain Region Data Entry - Left/Right Volumes Only */}
+        <div className="space-y-4 mt-6">
+          <div className="grid grid-cols-12 gap-4 font-bold text-sm bg-gray-100 p-2 rounded">
+            <div className="col-span-3">Brain Region</div>
+            <div className="col-span-2">Left (cm³)</div>
+            <div className="col-span-2">Right (cm³)</div>
+            <div className="col-span-2">Total (cm³)</div>
+            <div className="col-span-2">Norm (cm³)</div>
+            <div className="col-span-1">SD</div>
+          </div>
+          {brainRegions.map((region, index) => (
+            <div key={`region-lat-${index}`} className="grid grid-cols-12 gap-4 items-center">
+              <div className="col-span-3">{region.name}</div>
+              <div className="col-span-2">
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  className={LH_INPUT_COLOR}
+                  value={region.leftVolume === undefined ? '' : region.leftVolume} 
+                  onChange={e => handleRegionChange(index, 'leftVolume', e.target.value)}
+                  placeholder="Left"
+                />
               </div>
-              {brainRegions.map((region, index) => (
-                <div key={`region-totalLH-${index}`} className="grid grid-cols-14 gap-4 items-center">
-                  <div className="col-span-3">{region.name}</div>
-                  <div className="col-span-2">
-                    <Input 
-                      type="number"
-                      step="0.01"
-                      className={LH_INPUT_COLOR}
-                      value={region.leftVolume === undefined ? '' : region.leftVolume}
-                      onChange={e => handleRegionChange(index, 'leftVolume', e.target.value)}
-                      placeholder="LH"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Input 
-                      type="number"
-                      step="0.01"
-                      className={RH_INPUT_COLOR}
-                      value={region.rightVolume === undefined ? '' : region.rightVolume}
-                      onChange={e => handleRegionChange(index, 'rightVolume', e.target.value)}
-                      placeholder="RH"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      value={region.totalVolume === undefined ? '' : region.totalVolume} 
-                      onChange={e => handleRegionChange(index, 'totalVolume', e.target.value)}
-                      placeholder="Total"
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      value={region.normativeValue} 
-                      onChange={e => handleRegionChange(index, 'normativeValue', e.target.value)}
-                      placeholder="Normative"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      value={region.standardDeviation} 
-                      onChange={e => handleRegionChange(index, 'standardDeviation', e.target.value)}
-                      placeholder="SD"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
-          
-          {/* Left/Right Volumes Tab */}
-          <TabsContent value="laterality" className="mt-4">
-            <div className="space-y-4">
-              <div className="grid grid-cols-12 gap-4 font-bold text-sm bg-gray-100 p-2 rounded">
-                <div className="col-span-3">Brain Region</div>
-                <div className="col-span-2">Left (cm³)</div>
-                <div className="col-span-2">Right (cm³)</div>
-                <div className="col-span-2">Total (cm³)</div>
-                <div className="col-span-2">Norm (cm³)</div>
-                <div className="col-span-1">SD</div>
+              <div className="col-span-2">
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  className={RH_INPUT_COLOR}
+                  value={region.rightVolume === undefined ? '' : region.rightVolume} 
+                  onChange={e => handleRegionChange(index, 'rightVolume', e.target.value)}
+                  placeholder="Right"
+                />
               </div>
-              {brainRegions.map((region, index) => (
-                <div key={`region-lat-${index}`} className="grid grid-cols-12 gap-4 items-center">
-                  <div className="col-span-3">{region.name}</div>
-                  <div className="col-span-2">
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      className={LH_INPUT_COLOR}
-                      value={region.leftVolume === undefined ? '' : region.leftVolume} 
-                      onChange={e => handleRegionChange(index, 'leftVolume', e.target.value)}
-                      placeholder="Left"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      className={RH_INPUT_COLOR}
-                      value={region.rightVolume === undefined ? '' : region.rightVolume} 
-                      onChange={e => handleRegionChange(index, 'rightVolume', e.target.value)}
-                      placeholder="Right"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      value={region.totalVolume === undefined ? '' : region.totalVolume} 
-                      onChange={e => handleRegionChange(index, 'totalVolume', e.target.value)}
-                      placeholder="Total"
-                      disabled
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      value={region.normativeValue} 
-                      onChange={e => handleRegionChange(index, 'normativeValue', e.target.value)}
-                      placeholder="Norm"
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Input 
-                      type="number" 
-                      step="0.01"
-                      value={region.standardDeviation} 
-                      onChange={e => handleRegionChange(index, 'standardDeviation', e.target.value)}
-                      placeholder="SD"
-                    />
-                  </div>
-                </div>
-              ))}
+              <div className="col-span-2">
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  value={region.totalVolume === undefined ? '' : region.totalVolume} 
+                  disabled
+                  placeholder="Total"
+                />
+              </div>
+              <div className="col-span-2">
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  value={region.normativeValue} 
+                  onChange={e => handleRegionChange(index, 'normativeValue', e.target.value)}
+                  placeholder="Norm"
+                />
+              </div>
+              <div className="col-span-1">
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  value={region.standardDeviation} 
+                  onChange={e => handleRegionChange(index, 'standardDeviation', e.target.value)}
+                  placeholder="SD"
+                />
+              </div>
             </div>
-          </TabsContent>
-        </Tabs>
+          ))}
+        </div>
       </CardContent>
       <CardFooter>
         <Button 
@@ -292,3 +213,4 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
 };
 
 export default DataEntryForm;
+
