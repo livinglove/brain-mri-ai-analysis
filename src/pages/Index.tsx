@@ -10,6 +10,7 @@ import { analyzeBrainData } from '@/utils/analysisUtils';
 const Index = () => {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
   const [extractedData, setExtractedData] = useState<Partial<PatientData> | null>(null);
+  const [activeTab, setActiveTab] = useState<'manual' | 'pdf'>('manual');
 
   const handleDataSubmit = (data: PatientData) => {
     const results = analyzeBrainData(data);
@@ -40,8 +41,8 @@ const Index = () => {
         ) : (
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl font-semibold mb-6">Brain Volume Analysis</h2>
-            
-            <Tabs defaultValue="manual" className="w-full">
+
+            <Tabs value={activeTab} onValueChange={val => setActiveTab(val as 'manual' | 'pdf')} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="manual">Manual Data Entry</TabsTrigger>
                 <TabsTrigger value="pdf">PDF Upload</TabsTrigger>
@@ -53,7 +54,7 @@ const Index = () => {
                   initialData={extractedData || undefined} 
                 />
               </TabsContent>
-              
+
               <TabsContent value="pdf">
                 <PDFUploader onDataExtracted={handleDataExtracted} />
                 
@@ -66,9 +67,7 @@ const Index = () => {
                     </p>
                     <div className="flex">
                       <button 
-                        onClick={() => {
-                          document.querySelector('[data-state="inactive"][data-value="manual"]')?.click();
-                        }}
+                        onClick={() => setActiveTab('manual')}
                         className="px-4 py-2 bg-medical-blue text-white rounded hover:bg-blue-700 transition-colors"
                       >
                         Switch to Manual Data Entry

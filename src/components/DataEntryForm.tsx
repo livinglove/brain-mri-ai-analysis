@@ -15,6 +15,9 @@ interface DataEntryFormProps {
   initialData?: Partial<PatientData>;
 }
 
+const LH_INPUT_COLOR = "bg-[#D3E4FD]"; // Soft blue
+const RH_INPUT_COLOR = "bg-[#E5DEFF]"; // Soft purple
+
 const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData }) => {
   const [patientId, setPatientId] = useState(initialData?.patientId || '');
   const [age, setAge] = useState(initialData?.age?.toString() || '');
@@ -28,34 +31,33 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
       totalVolume: undefined
     }))
   );
+  const [activeTab, setActiveTab] = useState<'volume' | 'laterality'>("volume");
 
   const handleRegionChange = (index: number, field: keyof BrainRegion, value: string) => {
     const newRegions = [...brainRegions];
-    
-    // Handle numeric fields
     if (['leftVolume', 'rightVolume', 'totalVolume', 'normativeValue', 'standardDeviation'].includes(field)) {
       newRegions[index] = {
         ...newRegions[index],
         [field]: value === '' ? undefined : parseFloat(value)
       };
-      
-      // If left and right are provided, calculate total
+
+      // If LH/RH changes, always auto-update Total
       if (field === 'leftVolume' || field === 'rightVolume') {
-        const left = field === 'leftVolume' ? parseFloat(value) : newRegions[index].leftVolume;
-        const right = field === 'rightVolume' ? parseFloat(value) : newRegions[index].rightVolume;
-        
+        const left = field === 'leftVolume' ? (value === '' ? undefined : parseFloat(value)) : newRegions[index].leftVolume;
+        const right = field === 'rightVolume' ? (value === '' ? undefined : parseFloat(value)) : newRegions[index].rightVolume;
         if (left !== undefined && right !== undefined) {
           newRegions[index].totalVolume = parseFloat((left + right).toFixed(2));
+        } else {
+          newRegions[index].totalVolume = undefined;
         }
       }
+      // Changing totalVolume does not alter LH/RH
     } else {
-      // Handle string fields
       newRegions[index] = {
         ...newRegions[index],
         [field]: value
       };
     }
-    
     setBrainRegions(newRegions);
   };
 
@@ -64,29 +66,23 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
       toast.error("Patient ID is required");
       return false;
     }
-    
     if (!age.trim() || isNaN(parseInt(age))) {
       toast.error("Valid age is required");
       return false;
     }
-    
-    // Check if at least one region has values
     const hasData = brainRegions.some(region => 
       region.totalVolume !== undefined || 
       (region.leftVolume !== undefined && region.rightVolume !== undefined)
     );
-    
     if (!hasData) {
       toast.error("Please enter data for at least one brain region");
       return false;
     }
-    
     return true;
   };
 
   const handleSubmit = () => {
     if (!validateForm()) return;
-    
     const patientData: PatientData = {
       patientId,
       age: parseInt(age),
@@ -96,7 +92,6 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         (region.leftVolume !== undefined && region.rightVolume !== undefined)
       )
     };
-    
     onDataSubmit(patientData);
   };
 
@@ -143,34 +138,54 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
             </Select>
           </div>
         </div>
-        
         {/* Brain Region Data Entry */}
-        <Tabs defaultValue="volume" className="w-full">
+        <Tabs value={activeTab} onValueChange={val => setActiveTab(val as 'volume' | 'laterality')} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="volume">Total Volume</TabsTrigger>
             <TabsTrigger value="laterality">Left/Right Volumes</TabsTrigger>
           </TabsList>
-          
-          {/* Total Volume Tab */}
+
+          {/* Total Volume Tab with LH/RH */}
           <TabsContent value="volume" className="mt-4">
             <div className="space-y-4">
-              <div className="grid grid-cols-12 gap-4 font-bold text-sm bg-gray-100 p-2 rounded">
-                <div className="col-span-4">Brain Region</div>
-                <div className="col-span-3">Total Volume (cm³)</div>
-                <div className="col-span-3">Normative Value (cm³)</div>
-                <div className="col-span-2">SD</div>
+              <div className="grid grid-cols-14 gap-4 font-bold text-sm bg-gray-100 p-2 rounded">
+                <div className="col-span-3">Brain Region</div>
+                <div className="col-span-2 text-center">LH (cm³)</div>
+                <div className="col-span-2 text-center">RH (cm³)</div>
+                <div className="col-span-2 text-center">Total (cm³)</div>
+                <div className="col-span-3 text-center">Normative (cm³)</div>
+                <div className="col-span-2 text-center">SD</div>
               </div>
-              
               {brainRegions.map((region, index) => (
-                <div key={`region-${index}`} className="grid grid-cols-12 gap-4 items-center">
-                  <div className="col-span-4">{region.name}</div>
-                  <div className="col-span-3">
+                <div key={`region-totalLH-${index}`} className="grid grid-cols-14 gap-4 items-center">
+                  <div className="col-span-3">{region.name}</div>
+                  <div className="col-span-2">
+                    <Input 
+                      type="number"
+                      step="0.01"
+                      className={LH_INPUT_COLOR}
+                      value={region.leftVolume === undefined ? '' : region.leftVolume}
+                      onChange={e => handleRegionChange(index, 'leftVolume', e.target.value)}
+                      placeholder="LH"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Input 
+                      type="number"
+                      step="0.01"
+                      className={RH_INPUT_COLOR}
+                      value={region.rightVolume === undefined ? '' : region.rightVolume}
+                      onChange={e => handleRegionChange(index, 'rightVolume', e.target.value)}
+                      placeholder="RH"
+                    />
+                  </div>
+                  <div className="col-span-2">
                     <Input 
                       type="number" 
                       step="0.01"
                       value={region.totalVolume === undefined ? '' : region.totalVolume} 
                       onChange={e => handleRegionChange(index, 'totalVolume', e.target.value)}
-                      placeholder="Volume"
+                      placeholder="Total"
                     />
                   </div>
                   <div className="col-span-3">
@@ -179,7 +194,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
                       step="0.01"
                       value={region.normativeValue} 
                       onChange={e => handleRegionChange(index, 'normativeValue', e.target.value)}
-                      placeholder="Norm Value"
+                      placeholder="Normative"
                     />
                   </div>
                   <div className="col-span-2">
@@ -207,7 +222,6 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
                 <div className="col-span-2">Norm (cm³)</div>
                 <div className="col-span-1">SD</div>
               </div>
-              
               {brainRegions.map((region, index) => (
                 <div key={`region-lat-${index}`} className="grid grid-cols-12 gap-4 items-center">
                   <div className="col-span-3">{region.name}</div>
@@ -215,6 +229,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
                     <Input 
                       type="number" 
                       step="0.01"
+                      className={LH_INPUT_COLOR}
                       value={region.leftVolume === undefined ? '' : region.leftVolume} 
                       onChange={e => handleRegionChange(index, 'leftVolume', e.target.value)}
                       placeholder="Left"
@@ -224,6 +239,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
                     <Input 
                       type="number" 
                       step="0.01"
+                      className={RH_INPUT_COLOR}
                       value={region.rightVolume === undefined ? '' : region.rightVolume} 
                       onChange={e => handleRegionChange(index, 'rightVolume', e.target.value)}
                       placeholder="Right"
