@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { extractDataFromPDFText } from '@/utils/analysisUtils';
-import { getNormativeValue } from '@/utils/normativeData';
+import { extractDataFromPDFText, getAgeAdjustedNorm } from '@/utils/analysisUtils';
 import { PatientData } from '@/types/brainData';
 import { Upload } from 'lucide-react';
 
@@ -51,9 +50,12 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
             // Apply age-adjusted normative values if age is available
             if (extractedData.age) {
               const age = extractedData.age;
+              console.log(`Applying age-adjusted norms for age: ${age} to extracted data`);
+              
               extractedData.brainRegions = extractedData.brainRegions.map(region => {
-                const normValue = getNormativeValue(region.name, age);
+                const normValue = getAgeAdjustedNorm(region.name, age);
                 if (normValue !== undefined) {
+                  console.log(`Region: ${region.name}, Updated norm: ${normValue}`);
                   return {
                     ...region,
                     normativeValue: normValue,

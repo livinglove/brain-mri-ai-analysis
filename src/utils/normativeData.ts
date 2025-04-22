@@ -131,10 +131,12 @@ export function getNormativeValue(structureName: string, age: number): number | 
   const structure = findMatchingStructure(structureName);
   
   if (!structure) {
+    console.log(`No matching structure found for: ${structureName}`);
     return undefined;
   }
   
   if (normativeRanges.brainStructures[structure][ageGroup]) {
+    console.log(`Found normative value for ${structure} at age ${age} (${ageGroup}): ${normativeRanges.brainStructures[structure][ageGroup].mean}`);
     return normativeRanges.brainStructures[structure][ageGroup].mean;
   } else if (normativeRanges.brainStructures[structure]["All"]) {
     return normativeRanges.brainStructures[structure]["All"].mean;
@@ -150,18 +152,44 @@ export function getNormativeValue(structureName: string, age: number): number | 
  * using partial matching to handle different naming conventions
  */
 function findMatchingStructure(regionName: string): string | undefined {
+  // Convert the display names to their base forms for matching
+  const displayToBase: {[key: string]: string} = {
+    "Forebrain Parenchyma": "Forebrain",
+    "Cortical Gray Matter": "Cortical Gray",
+    "Hippocampi": "Hippocampus",
+    "Amydalae": "Amygdala",
+    "Caudates": "Caudate",
+    "Putamina": "Putamen",
+    "Pallidums": "Pallidum",
+    "Thalami": "Thalamus"
+  };
+  
+  // First check if it's one of our renamed regions
+  if (displayToBase[regionName]) {
+    return displayToBase[regionName];
+  }
+  
+  // If not a direct match, try partial matching (case-insensitive)
   regionName = regionName.toLowerCase();
   
   const structureMap: {[key: string]: string} = {
     "hippocampus": "Hippocampus",
+    "hippocampi": "Hippocampus",
     "amygdala": "Amygdala",
+    "amydalae": "Amygdala",
     "thalamus": "Thalamus",
+    "thalami": "Thalamus",
     "caudate": "Caudate",
+    "caudates": "Caudate",
     "putamen": "Putamen",
+    "putamina": "Putamen",
     "pallidum": "Pallidum",
+    "pallidums": "Pallidum",
     "forebrain": "Forebrain",
+    "parenchyma": "Forebrain",
     "cortical": "Cortical Gray",
-    "gray": "Cortical Gray"
+    "gray": "Cortical Gray",
+    "grey": "Cortical Gray"
   };
   
   // Try direct mapping first
@@ -173,4 +201,22 @@ function findMatchingStructure(regionName: string): string | undefined {
   
   // If no match, return undefined
   return undefined;
+}
+
+/**
+ * Get the display name for a structure key
+ */
+export function getDisplayName(structureKey: string): string {
+  const baseToDisplay: {[key: string]: string} = {
+    "Forebrain": "Forebrain Parenchyma",
+    "Cortical Gray": "Cortical Gray Matter",
+    "Hippocampus": "Hippocampi",
+    "Amygdala": "Amydalae",
+    "Caudate": "Caudates",
+    "Putamen": "Putamina",
+    "Pallidum": "Pallidums",
+    "Thalamus": "Thalami"
+  };
+  
+  return baseToDisplay[structureKey] || structureKey;
 }

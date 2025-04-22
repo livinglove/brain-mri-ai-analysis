@@ -3,8 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { BrainRegion, PatientData } from '@/types/brainData';
-import { sampleNormativeData } from '@/utils/analysisUtils';
-import { getNormativeValue } from '@/utils/normativeData';
+import { sampleNormativeData, getAgeAdjustedNorm } from '@/utils/analysisUtils';
 import { toast } from 'sonner';
 import PatientInfoForm from "./PatientInfoForm";
 import BrainRegionInputTable from "./BrainRegionInputTable";
@@ -35,14 +34,19 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
   useEffect(() => {
     if (age && !isNaN(parseInt(age))) {
       const currentAge = parseInt(age);
+      console.log(`Updating normative values for age: ${currentAge}`);
+      
       const updatedRegions = brainRegions.map(region => {
-        const normValue = getNormativeValue(region.name, currentAge);
+        const normValue = getAgeAdjustedNorm(region.name, currentAge);
+        console.log(`Region: ${region.name}, Previous norm: ${region.normativeValue}, New norm: ${normValue}`);
+        
         return {
           ...region,
           normativeValue: normValue !== undefined ? normValue : region.normativeValue,
           ageAdjusted: normValue !== undefined
         };
       });
+      
       setBrainRegions(updatedRegions);
     }
   }, [age]);

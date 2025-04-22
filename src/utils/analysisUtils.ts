@@ -1,6 +1,5 @@
-
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
-import { getNormativeValue } from './normativeData';
+import { getNormativeValue, getDisplayName } from './normativeData';
 
 // Standard deviation threshold for abnormality
 const SD_THRESHOLD = 2.0;
@@ -370,24 +369,10 @@ export const sampleNormativeData: BrainRegion[] = [
   }
 ];
 
-// Helper function for mapping new display names back to knowledgebase keys for age adjustment
-function getKnowledgeBaseKey(regionDisplayName: string): string | undefined {
-  const reverseMap: { [key: string]: string } = {
-    "Forebrain Parenchyma": "Forebrain",
-    "Cortical Gray Matter": "Cortical Gray",
-    "Hippocampi": "Hippocampus",
-    "Amydalae": "Amygdala",
-    "Caudates": "Caudate",
-    "Putamina": "Putamen",
-    "Pallidums": "Pallidum",
-    "Thalami": "Thalamus"
-  };
-  return reverseMap[regionDisplayName];
-}
-
-// Patch dataEntryForm norm updating helper by exporting this for outside usage:
+/**
+ * Get age-adjusted normative value for a brain region display name
+ */
 export function getAgeAdjustedNorm(regionDisplayName: string, age: number): number | undefined {
-  const kbKey = getKnowledgeBaseKey(regionDisplayName);
-  if (!kbKey) return undefined;
-  return getNormativeValue(kbKey, age);
+  console.log(`Getting age-adjusted norm for: ${regionDisplayName} at age: ${age}`);
+  return getNormativeValue(regionDisplayName, age);
 }
