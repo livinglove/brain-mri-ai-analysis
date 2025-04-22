@@ -1,3 +1,4 @@
+
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
 import { getNormativeValue, getDisplayName } from './normativeData';
 
@@ -198,9 +199,10 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
       
       // Look for any lines that might contain brain region names and numeric values
       const brainRegionNames = [
-        "Hippocampus", "Amygdala", "Thalamus", "Caudate", "Putamen", "Pallidum",
+        "Hippocampus", "Hippocampi", "Amygdala", "Amydalae", "Amygdalae", "Thalamus", "Thalami", 
+        "Caudate", "Caudates", "Putamen", "Putamina", "Pallidum", "Pallidums",
         "Brainstem", "Cerebellum", "Ventricle", "Frontal", "Temporal", "Parietal",
-        "Occipital", "Cortex", "White Matter", "Gray Matter"
+        "Occipital", "Cortex", "White Matter", "Gray Matter", "Grey Matter"
       ];
       
       for (const line of lines) {
@@ -222,7 +224,7 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
       }
     }
     
-    // Define a mapping from raw extracted names to new names
+    // Define a mapping from raw extracted names to new display names
     const regionNameMap: { [key: string]: string } = {
       "Forebrain": "Forebrain Parenchyma",
       "Cortical Gray": "Cortical Gray Matter",
@@ -274,11 +276,16 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
         
         // Extract the name and clean it up
         let name = match[1].trim();
+        
         // Map to new region name if available
         const mappedNameKey = Object.keys(regionNameMap).find(k =>
           name.toLowerCase().includes(k.toLowerCase())
         );
-        if (mappedNameKey) name = regionNameMap[mappedNameKey];
+        
+        if (mappedNameKey) {
+          console.log(`Mapped region name from "${name}" to "${regionNameMap[mappedNameKey]}"`);
+          name = regionNameMap[mappedNameKey];
+        }
         
         // Skip lines that don't look like brain regions
         if (name.length < 3 || name.match(/^[0-9\s]+$/)) {
@@ -325,7 +332,7 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
   }
 }
 
-// Replace sampleNormativeData to match new order, names, and values per your knowledgebase:
+// Replace sampleNormativeData to match new order, names, and values:
 export const sampleNormativeData: BrainRegion[] = [
   {
     name: "Forebrain Parenchyma",

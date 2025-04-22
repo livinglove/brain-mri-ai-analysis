@@ -53,6 +53,7 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
               console.log(`Applying age-adjusted norms for age: ${age} to extracted data`);
               
               extractedData.brainRegions = extractedData.brainRegions.map(region => {
+                // Ensure we're using the correct name when getting normative values
                 const normValue = getAgeAdjustedNorm(region.name, age);
                 if (normValue !== undefined) {
                   console.log(`Region: ${region.name}, Updated norm: ${normValue}`);

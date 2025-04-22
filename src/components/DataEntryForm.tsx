@@ -37,6 +37,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
       console.log(`Updating normative values for age: ${currentAge}`);
       
       const updatedRegions = brainRegions.map(region => {
+        // Make sure to use the exact region name (with proper pluralization) when getting the norm
         const normValue = getAgeAdjustedNorm(region.name, currentAge);
         console.log(`Region: ${region.name}, Previous norm: ${region.normativeValue}, New norm: ${normValue}`);
         

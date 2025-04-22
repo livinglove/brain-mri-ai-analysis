@@ -152,30 +152,43 @@ export function getNormativeValue(structureName: string, age: number): number | 
  * using partial matching to handle different naming conventions
  */
 function findMatchingStructure(regionName: string): string | undefined {
-  // Convert the display names to their base forms for matching
+  // Updated mapping to properly handle plural forms to singular knowledge base keys
   const displayToBase: {[key: string]: string} = {
     "Forebrain Parenchyma": "Forebrain",
     "Cortical Gray Matter": "Cortical Gray",
     "Hippocampi": "Hippocampus",
-    "Amydalae": "Amygdala",
+    "Amydalae": "Amygdala", 
+    "Amygdalae": "Amygdala", // Fix spelling variation
     "Caudates": "Caudate",
     "Putamina": "Putamen",
     "Pallidums": "Pallidum",
     "Thalami": "Thalamus"
   };
   
-  // First check if it's one of our renamed regions
+  console.log(`Finding matching structure for: "${regionName}"`);
+  
+  // First check if it's a direct match in our mapping
   if (displayToBase[regionName]) {
+    console.log(`Direct match found: ${regionName} -> ${displayToBase[regionName]}`);
     return displayToBase[regionName];
   }
   
-  // If not a direct match, try partial matching (case-insensitive)
+  // If not a direct match, try case-insensitive direct match
+  for (const [display, base] of Object.entries(displayToBase)) {
+    if (regionName.toLowerCase() === display.toLowerCase()) {
+      console.log(`Case-insensitive match found: ${regionName} -> ${base}`);
+      return base;
+    }
+  }
+  
+  // If still no match, try partial matching (case-insensitive)
   regionName = regionName.toLowerCase();
   
   const structureMap: {[key: string]: string} = {
     "hippocampus": "Hippocampus",
     "hippocampi": "Hippocampus",
     "amygdala": "Amygdala",
+    "amygdalae": "Amygdala",
     "amydalae": "Amygdala",
     "thalamus": "Thalamus",
     "thalami": "Thalamus",
@@ -192,14 +205,15 @@ function findMatchingStructure(regionName: string): string | undefined {
     "grey": "Cortical Gray"
   };
   
-  // Try direct mapping first
+  // Try direct mapping with lowercase keys
   for (const key in structureMap) {
     if (regionName.includes(key)) {
+      console.log(`Partial match found: ${regionName} contains ${key} -> ${structureMap[key]}`);
       return structureMap[key];
     }
   }
   
-  // If no match, return undefined
+  console.log(`No match found for: ${regionName}`);
   return undefined;
 }
 
