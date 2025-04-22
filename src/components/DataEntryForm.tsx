@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BrainRegion, PatientData } from '@/types/brainData';
 import { sampleNormativeData } from '@/utils/analysisUtils';
 import { toast } from 'sonner';
+import PatientInfoForm from "./PatientInfoForm";
+import BrainRegionTable from "./BrainRegionTable";
 
 interface DataEntryFormProps {
   onDataSubmit: (data: PatientData) => void;
@@ -22,13 +23,13 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
   const [age, setAge] = useState(initialData?.age?.toString() || '');
   const [sex, setSex] = useState<'male' | 'female'>(initialData?.sex || 'male');
   const [brainRegions, setBrainRegions] = useState<BrainRegion[]>(
-    initialData?.brainRegions || 
-    sampleNormativeData.map(region => ({ 
-      ...region,
-      leftVolume: undefined,
-      rightVolume: undefined,
-      totalVolume: undefined
-    }))
+    initialData?.brainRegions ||
+      sampleNormativeData.map(region => ({
+        ...region,
+        leftVolume: undefined,
+        rightVolume: undefined,
+        totalVolume: undefined,
+      }))
   );
 
   const handleRegionChange = (index: number, field: keyof BrainRegion, value: string) => {
@@ -102,107 +103,24 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Patient Information */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="patient-id">Patient ID</Label>
-            <Input 
-              id="patient-id" 
-              value={patientId} 
-              onChange={e => setPatientId(e.target.value)}
-              placeholder="Enter patient ID"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="age">Age</Label>
-            <Input 
-              id="age" 
-              type="number" 
-              value={age} 
-              onChange={e => setAge(e.target.value)}
-              placeholder="Enter age"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sex">Sex</Label>
-            <Select value={sex} onValueChange={(value) => setSex(value as 'male' | 'female')}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select sex" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Male</SelectItem>
-                <SelectItem value="female">Female</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        {/* Brain Region Data Entry - Left/Right Volumes Only */}
-        <div className="space-y-4 mt-6">
-          <div className="grid grid-cols-12 gap-4 font-bold text-sm bg-gray-100 p-2 rounded">
-            <div className="col-span-3">Brain Region</div>
-            <div className="col-span-2">Left (cm³)</div>
-            <div className="col-span-2">Right (cm³)</div>
-            <div className="col-span-2">Total (cm³)</div>
-            <div className="col-span-2">Norm (cm³)</div>
-            <div className="col-span-1">SD</div>
-          </div>
-          {brainRegions.map((region, index) => (
-            <div key={`region-lat-${index}`} className="grid grid-cols-12 gap-4 items-center">
-              <div className="col-span-3">{region.name}</div>
-              <div className="col-span-2">
-                <Input 
-                  type="number" 
-                  step="0.01"
-                  className={LH_INPUT_COLOR}
-                  value={region.leftVolume === undefined ? '' : region.leftVolume} 
-                  onChange={e => handleRegionChange(index, 'leftVolume', e.target.value)}
-                  placeholder="Left"
-                />
-              </div>
-              <div className="col-span-2">
-                <Input 
-                  type="number" 
-                  step="0.01"
-                  className={RH_INPUT_COLOR}
-                  value={region.rightVolume === undefined ? '' : region.rightVolume} 
-                  onChange={e => handleRegionChange(index, 'rightVolume', e.target.value)}
-                  placeholder="Right"
-                />
-              </div>
-              <div className="col-span-2">
-                <Input 
-                  type="number" 
-                  step="0.01"
-                  value={region.totalVolume === undefined ? '' : region.totalVolume} 
-                  disabled
-                  placeholder="Total"
-                />
-              </div>
-              <div className="col-span-2">
-                <Input 
-                  type="number" 
-                  step="0.01"
-                  value={region.normativeValue} 
-                  onChange={e => handleRegionChange(index, 'normativeValue', e.target.value)}
-                  placeholder="Norm"
-                />
-              </div>
-              <div className="col-span-1">
-                <Input 
-                  type="number" 
-                  step="0.01"
-                  value={region.standardDeviation} 
-                  onChange={e => handleRegionChange(index, 'standardDeviation', e.target.value)}
-                  placeholder="SD"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+        <PatientInfoForm
+          patientId={patientId}
+          age={age}
+          sex={sex}
+          onPatientIdChange={setPatientId}
+          onAgeChange={setAge}
+          onSexChange={setSex}
+        />
+        <BrainRegionTable
+          regions={brainRegions}
+          lhColor={LH_INPUT_COLOR}
+          rhColor={RH_INPUT_COLOR}
+          onRegionChange={handleRegionChange}
+        />
       </CardContent>
       <CardFooter>
-        <Button 
-          onClick={handleSubmit} 
+        <Button
+          onClick={handleSubmit}
           className="ml-auto bg-medical-blue hover:bg-blue-700"
         >
           Analyze Data
@@ -213,4 +131,3 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
 };
 
 export default DataEntryForm;
-
