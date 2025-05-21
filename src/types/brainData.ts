@@ -7,6 +7,7 @@ export interface BrainRegion {
   normativeValue: number;
   standardDeviation: number;
   ageAdjusted?: boolean;
+  zScore?: number;
 }
 
 export interface PatientData {
@@ -19,7 +20,7 @@ export interface PatientData {
 export interface AnalysisResult {
   brainRegion: string;
   status: 'normal' | 'atrophied' | 'enlarged';
-  deviationScore: number; // How many SDs from normative
+  zScore: number; // Changed from deviationScore to zScore
   asymmetry?: {
     difference: number; // Absolute difference
     percentDifference: number; // Percentage difference

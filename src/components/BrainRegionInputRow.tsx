@@ -15,9 +15,23 @@ interface BrainRegionInputRowProps {
 const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
   region, index, lhColor, rhColor, onChange,
 }) => {
+  const getZScoreColor = (zScore?: number) => {
+    if (zScore === undefined) return "";
+    if (zScore <= -2) return "text-red-600 font-medium";
+    if (zScore >= 2) return "text-yellow-600 font-medium";
+    return "text-green-600";
+  };
+
   return (
     <div className="grid grid-cols-12 gap-4 items-center">
-      <div className="col-span-3">{region.name}</div>
+      <div className="col-span-3 flex items-center">
+        <span>{region.name}</span>
+        {region.zScore !== undefined && (
+          <span className={`ml-2 text-xs ${getZScoreColor(region.zScore)}`}>
+            (Z: {region.zScore > 0 ? '+' : ''}{region.zScore})
+          </span>
+        )}
+      </div>
       <div className="col-span-2">
         <Input
           type="number"

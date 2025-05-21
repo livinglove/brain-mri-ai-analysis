@@ -1,14 +1,13 @@
-
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
 import { getNormativeValue, getDisplayName } from './normativeData';
 
-// Standard deviation threshold for abnormality
-const SD_THRESHOLD = 2.0;
+// Z-score thresholds for abnormality
+const Z_SCORE_THRESHOLD = 2.0;
 // Threshold for significant asymmetry (percentage)
 const ASYMMETRY_THRESHOLD = 10;
 
 /**
- * Analyze brain regions for abnormalities based on standard deviations from normative values
+ * Analyze brain regions for abnormalities based on Z-scores from age-matched controls
  */
 export function analyzeBrainData(patientData: PatientData): AnalysisResults {
   const results: AnalysisResult[] = [];
@@ -46,31 +45,32 @@ export function analyzeBrainData(patientData: PatientData): AnalysisResults {
 }
 
 /**
- * Analyze a single brain region
+ * Analyze a single brain region using Z-scores
  */
 function analyzeRegion(region: BrainRegion): AnalysisResult {
   const result: AnalysisResult = {
     brainRegion: region.name,
     status: 'normal',
-    deviationScore: 0
+    zScore: 0
   };
   
   // If we have total volume, use it for analysis
   if (region.totalVolume !== undefined) {
-    const deviation = (region.totalVolume - region.normativeValue) / region.standardDeviation;
-    result.deviationScore = parseFloat(deviation.toFixed(2));
+    // Calculate Z-score: (actual - expected) / standard deviation
+    const zScore = (region.totalVolume - region.normativeValue) / region.standardDeviation;
+    result.zScore = parseFloat(zScore.toFixed(2));
     
-    // Fix: Properly determine if volume is atrophied or enlarged
-    // If the volume is less than normative, consider atrophy (negative deviation)
-    // If the volume is greater than normative, consider enlargement (positive deviation)
-    if (deviation <= -SD_THRESHOLD) {
+    // Use Z-score for determining status:
+    // Z-score < -2 means significantly smaller (atrophied)
+    // Z-score > +2 means significantly larger (enlarged)
+    if (zScore <= -Z_SCORE_THRESHOLD) {
       result.status = 'atrophied';
-    } else if (deviation >= SD_THRESHOLD) {
+    } else if (zScore >= Z_SCORE_THRESHOLD) {
       result.status = 'enlarged';
     }
 
     // Add console logging to help debug
-    console.log(`Region ${region.name}: Volume=${region.totalVolume}, Norm=${region.normativeValue}, SD=${region.standardDeviation}, Deviation=${deviation}, Status=${result.status}`);
+    console.log(`Region ${region.name}: Volume=${region.totalVolume}, Norm=${region.normativeValue}, SD=${region.standardDeviation}, Z-Score=${zScore}, Status=${result.status}`);
   }
   
   // Check for asymmetry if we have left and right volumes
@@ -91,8 +91,7 @@ function analyzeRegion(region: BrainRegion): AnalysisResult {
 }
 
 /**
- * Extract brain region data from PDF text
- * More flexible detection of NeuroQuant information
+ * Enhanced PDF text extraction with improved LH/RH detection
  */
 export function extractDataFromPDFText(text: string): Partial<PatientData> {
   try {
@@ -100,7 +99,6 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
     console.log("Extracting data from PDF text of length:", text.length);
     
     // Check for various possible headers that might indicate NeuroQuant data
-    // Being more flexible with detection, including case insensitivity and various spellings
     const possibleHeaders = [
       "NeuroQuant Morphometry",
       "NeuroQuant Morphology",
@@ -136,7 +134,7 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
     
     // Extract patient information - allow more flexible matching
     const patientIdMatch = text.match(/(?:Patient\s*ID|Subject\s*ID|ID|Patient|Subject):\s*([A-Z0-9-_]+)/i);
-    const ageMatch = text.match(/(?:Age|Years):\s*(\d+)/i);
+    const ageMatch = text.match(/(?:Age|Years|yr):\s*(\d+)/i);
     const sexMatch = text.match(/(?:Sex|Gender):\s*(Male|Female|M|F)/i);
     
     let sex: 'male' | 'female' = 'male';
@@ -145,82 +143,96 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
       sex = sexValue === 'female' || sexValue === 'f' ? 'female' : 'male';
     }
     
-    // Find the brain volume data - more flexible pattern matching
+    // Improved approach to finding brain volume data: look for lateral hemispheric data specifically
     const morphometryLines: string[] = [];
-    const lines = text.split('\n');
+    const lines = text.split(/\n|\r\n|\r/); // Handle different line break formats
     
-    // Track table data - look for structured numeric data
-    let inDataSection = false;
-    let tableStartLine = -1;
+    // More patterns to detect hemisphere data
+    const leftRightPatterns = [
+      /left|right|lh|rh/i,                      // Basic keywords
+      /(?:left|l)\.?\s+(?:hem|hemisphere|vol)/i,  // Left hemisphere variations
+      /(?:right|r)\.?\s+(?:hem|hemisphere|vol)/i, // Right hemisphere variations
+      /(?:bilateral|total)/i                    // Combined volumes
+    ];
     
-    // First pass: identify potential data tables based on numeric patterns
+    // New approach: scan through lines looking for table columns that indicate left and right hemispheres
+    let tableColumns: {leftCol?: number, rightCol?: number, totalCol?: number} = {};
+    let headerLine = -1;
+    
+    // First, find header rows that contain left/right column information
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+      const line = lines[i].trim().toLowerCase();
       
-      // Look for table headers or volume data patterns
+      // Look for header rows with column labels
       if (
-        (line.includes("Structure") && 
-         (line.includes("Left") || line.includes("Right") || line.includes("Total") || line.includes("Norm"))) ||
-        (line.includes("Volume") && (line.includes("cm³") || line.includes("mm³") || line.includes("%")))
+        (line.includes("left") || line.includes("l.") || line.includes("lh")) && 
+        (line.includes("right") || line.includes("r.") || line.includes("rh"))
       ) {
-        console.log("Found potential table header at line", i, ":", line);
-        tableStartLine = i;
-      }
-      
-      // If we've found a table header, check subsequent lines for numeric data patterns
-      if (tableStartLine > -1 && i > tableStartLine) {
-        // Look for lines with multiple numbers, which could be volume data
-        // Pattern: Text label followed by 3-5 numbers
-        const volumeDataPattern = /^([A-Za-z\s\-\.]+)(?:\s+\d+\.?\d*){3,5}$/;
-        if (volumeDataPattern.test(line)) {
-          if (!inDataSection) {
-            console.log("Starting data section at line", i);
-            inDataSection = true;
+        console.log("Found potential column headers at line", i, ":", line);
+        headerLine = i;
+        
+        // Split the header line into columns to identify positions
+        const columns = line.split(/\s+/).filter(Boolean);
+        for (let j = 0; j < columns.length; j++) {
+          const col = columns[j].toLowerCase();
+          if (col === "left" || col === "l." || col === "lh") {
+            tableColumns.leftCol = j;
+            console.log("Left column detected at position", j);
           }
-          morphometryLines.push(line);
-        } 
-        // If we're in a data section but hit an empty line or non-matching line,
-        // it might be the end of the data table
-        else if (inDataSection && (line === '' || !line.match(/\d+\.\d+/))) {
-          // Skip single empty lines within data
-          if (line !== '' || (i + 1 < lines.length && lines[i+1].trim() === '')) {
-            console.log("Ending data section at line", i);
-            inDataSection = false;
+          if (col === "right" || col === "r." || col === "rh") {
+            tableColumns.rightCol = j;
+            console.log("Right column detected at position", j);
           }
+          if (col === "total" || col === "bil." || col === "bilateral") {
+            tableColumns.totalCol = j;
+            console.log("Total column detected at position", j);
+          }
+        }
+        
+        // If we found header columns, break
+        if (tableColumns.leftCol !== undefined || tableColumns.rightCol !== undefined) {
+          break;
         }
       }
     }
     
-    console.log(`Found ${morphometryLines.length} lines of potential brain region data`);
+    // If we didn't find explicit headers, look for left/right patterns in the data
+    const dataLines: {line: string, lineNum: number, hasLeftRight: boolean}[] = [];
     
-    // If no data was found using standard methods, try broader pattern matching
-    if (morphometryLines.length === 0) {
-      console.log("No structured table found, trying broader pattern matching");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line === '') continue;
       
-      // Look for any lines that might contain brain region names and numeric values
+      // Count numbers in the line
+      const numbers = line.match(/\d+\.\d+/g);
+      const hasMultipleNumbers = numbers && numbers.length >= 2;
+      
+      // Check if any known brain region name is in the line
       const brainRegionNames = [
-        "Hippocampus", "Hippocampi", "Amygdala", "Amydalae", "Amygdalae", "Thalamus", "Thalami", 
-        "Caudate", "Caudates", "Putamen", "Putamina", "Pallidum", "Pallidums",
-        "Brainstem", "Cerebellum", "Ventricle", "Frontal", "Temporal", "Parietal",
-        "Occipital", "Cortex", "White Matter", "Gray Matter", "Grey Matter"
+        "Forebrain", "Cortical Gray", "Cortical Grey", "Hippocampus", "Hippocampi", 
+        "Amygdala", "Amygdalae", "Amydalae", "Thalamus", "Thalami", "Caudate", "Caudates", 
+        "Putamen", "Putamina", "Pallidum", "Pallidums", "Brainstem"
       ];
       
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (trimmedLine === '') continue;
+      const hasRegionName = brainRegionNames.some(name => 
+        line.toLowerCase().includes(name.toLowerCase())
+      );
+      
+      // Check for left/right hemisphere indicators
+      const hasLeftRightIndicators = leftRightPatterns.some(pattern => 
+        pattern.test(line.toLowerCase())
+      );
+      
+      if (hasRegionName && hasMultipleNumbers) {
+        console.log(`Found potential data line (${i}): ${line}`);
+        dataLines.push({
+          line: line,
+          lineNum: i,
+          hasLeftRight: hasLeftRightIndicators
+        });
         
-        // Check if this line might contain a brain region name and numbers
-        for (const region of brainRegionNames) {
-          if (
-            (trimmedLine.toLowerCase().includes(region.toLowerCase()) || 
-             trimmedLine.toLowerCase().includes(region.toLowerCase().replace(" ", ""))) && 
-            trimmedLine.match(/\d+\.\d+/)
-          ) {
-            console.log("Found potential brain region data:", trimmedLine);
-            morphometryLines.push(trimmedLine);
-            break;
-          }
-        }
+        // Add to morphometry lines for processing
+        morphometryLines.push(line);
       }
     }
     
@@ -240,12 +252,11 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
     // Parse the collected data into brain region objects
     const brainRegions: BrainRegion[] = [];
     
-    // More flexible pattern matching for brain region data
-    // This handles variations in formatting across different NeuroQuant report formats
+    // Enhanced pattern matching for brain region data with explicit left/right detection
     for (const line of morphometryLines) {
       console.log("Processing line:", line);
       
-      // Try different pattern matches depending on the data format
+      // Create patterns to match both standardized formats and more variable formats
       
       // Pattern 1: Name followed by left, right, total, norm, SD values
       // Example: "Hippocampus    2.1    2.3    4.4    4.2    0.4"
@@ -259,14 +270,29 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
       // Example: "Hippocampus\t2.1\t2.3\t4.4\t4.2\t0.4"
       const pattern3 = /([A-Za-z\s\-\.]+)[\s\t]+([\d\.]+)[\s\t]+([\d\.]+)[\s\t]+([\d\.]+)[\s\t]+([\d\.]+)[\s\t]+([\d\.]+)/;
       
+      // Pattern 4: Looking for L/R indicators with numbers
+      // Example: "Hippocampus L:2.1 R:2.3 Total:4.4 Norm:4.2 SD:0.4"
+      const pattern4 = /([A-Za-z\s\-\.]+).*(?:L|Left|LH)[:\s]+([\d\.]+).*(?:R|Right|RH)[:\s]+([\d\.]+).*(?:Total|Sum|Bilateral)[:\s]+([\d\.]+)/i;
+      
+      // Pattern 5: Mixed format with L/R indicators and multiple numbers
+      const pattern5 = /([A-Za-z\s\-\.]+).*(?:L|Left)[:\s]+([\d\.]+).*(?:R|Right)[:\s]+([\d\.]+)/i;
+      
       let match: RegExpMatchArray | null = null;
       let patternUsed = 0;
       
-      // Try each pattern in sequence
-      if ((match = line.match(pattern1))) {
-        patternUsed = 1;
-      } else if ((match = line.match(pattern3))) {
-        patternUsed = 3;
+      // Try each pattern in sequence, prioritizing ones with explicit L/R detection
+      if ((match = line.match(pattern4))) {
+        patternUsed = 4;
+      } else if ((match = line.match(pattern5))) {
+        patternUsed = 5;
+      } else if ((match = line.match(pattern1)) || (match = line.match(pattern3))) {
+        // If we know which columns are L/R/Total based on table headers
+        if (tableColumns.leftCol !== undefined && tableColumns.rightCol !== undefined) {
+          patternUsed = 1;
+        } else {
+          // Try to guess based on context - usually L/R/Total are first 3 numbers
+          patternUsed = 1;
+        }
       } else if ((match = line.match(pattern2))) {
         patternUsed = 2;
       }
@@ -293,22 +319,166 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
           continue;
         }
         
-        if (patternUsed === 1 || patternUsed === 3) {
+        // Handle different pattern matches
+        if (patternUsed === 4 || patternUsed === 5) {
+          // Pattern 4/5: Explicit L/R indicators
+          const leftVol = parseFloat(match[2]);
+          const rightVol = parseFloat(match[3]);
+          const totalVol = patternUsed === 4 ? parseFloat(match[4]) : leftVol + rightVol;
+          
+          // Use sampleNormativeData to fill in normative values if we don't have them
+          const sampleData = sampleNormativeData.find(r => r.name === name);
+          const normative = sampleData ? sampleData.normativeValue : 0;
+          const stdDev = sampleData ? sampleData.standardDeviation : 0.1;
+          
           brainRegions.push({
             name: name,
-            leftVolume: parseFloat(match[2]),
-            rightVolume: parseFloat(match[3]),
-            totalVolume: parseFloat(match[4]),
-            normativeValue: parseFloat(match[5]),
-            standardDeviation: parseFloat(match[6])
+            leftVolume: leftVol,
+            rightVolume: rightVol,
+            totalVolume: totalVol,
+            normativeValue: normative,
+            standardDeviation: stdDev
           });
+        } else if (patternUsed === 1 || patternUsed === 3) {
+          // Standard table format - using indices or table headers if available
+          let leftIdx = 2, rightIdx = 3, totalIdx = 4, normIdx = 5, sdIdx = 6;
+          
+          // If we have identified table columns, use them
+          if (tableColumns.leftCol !== undefined && tableColumns.rightCol !== undefined) {
+            const allNumbers = line.match(/\d+\.\d+/g) || [];
+            console.log("Found numbers in line:", allNumbers);
+            
+            let leftVol, rightVol, totalVol, normVal, stdDev;
+            
+            // Use identified column positions if possible
+            if (tableColumns.leftCol < allNumbers.length) {
+              leftVol = parseFloat(allNumbers[tableColumns.leftCol]);
+            }
+            
+            if (tableColumns.rightCol < allNumbers.length) {
+              rightVol = parseFloat(allNumbers[tableColumns.rightCol]);
+            }
+            
+            if (tableColumns.totalCol !== undefined && tableColumns.totalCol < allNumbers.length) {
+              totalVol = parseFloat(allNumbers[tableColumns.totalCol]);
+            } else if (leftVol !== undefined && rightVol !== undefined) {
+              totalVol = leftVol + rightVol;
+            }
+            
+            // Use remaining columns for norm and SD (usually the last two)
+            if (allNumbers.length > Math.max(tableColumns.leftCol || 0, tableColumns.rightCol || 0) + 1) {
+              const remainingIdx = Math.max(tableColumns.leftCol || 0, tableColumns.rightCol || 0) + 1;
+              normVal = parseFloat(allNumbers[remainingIdx]);
+              
+              if (allNumbers.length > remainingIdx + 1) {
+                stdDev = parseFloat(allNumbers[remainingIdx + 1]);
+              } else {
+                // Use sample data for SD if not available
+                const sampleData = sampleNormativeData.find(r => r.name === name);
+                stdDev = sampleData ? sampleData.standardDeviation : 0.1;
+              }
+            } else {
+              // Fallback to sample normative data
+              const sampleData = sampleNormativeData.find(r => r.name === name);
+              normVal = sampleData ? sampleData.normativeValue : 0;
+              stdDev = sampleData ? sampleData.standardDeviation : 0.1;
+            }
+            
+            brainRegions.push({
+              name: name,
+              leftVolume: leftVol,
+              rightVolume: rightVol,
+              totalVolume: totalVol,
+              normativeValue: normVal || 0,
+              standardDeviation: stdDev || 0.1
+            });
+          } else {
+            // Standard pattern with default indices
+            brainRegions.push({
+              name: name,
+              leftVolume: parseFloat(match[leftIdx]),
+              rightVolume: parseFloat(match[rightIdx]),
+              totalVolume: parseFloat(match[totalIdx]),
+              normativeValue: parseFloat(match[normIdx]),
+              standardDeviation: parseFloat(match[sdIdx])
+            });
+          }
         } else if (patternUsed === 2) {
+          // Total only pattern
           brainRegions.push({
             name: name,
             totalVolume: parseFloat(match[2]),
             normativeValue: parseFloat(match[3]),
             standardDeviation: parseFloat(match[4])
           });
+        }
+      } else {
+        // For lines that didn't match our patterns, try a more aggressive numeric extraction
+        const allNumbers = line.match(/\d+\.\d+/g);
+        if (allNumbers && allNumbers.length >= 3) {
+          // Extract possible region name - everything before the first number
+          const possibleNameMatch = line.match(/^([A-Za-z\s\-\.]+)/);
+          if (possibleNameMatch) {
+            let name = possibleNameMatch[1].trim();
+            
+            // Check if this looks like a brain region
+            const isBrainRegion = brainRegionNames.some(region => 
+              name.toLowerCase().includes(region.toLowerCase())
+            );
+            
+            if (isBrainRegion) {
+              console.log("Extracting data with aggressive pattern for line:", line);
+              
+              // Map to proper name
+              const mappedNameKey = Object.keys(regionNameMap).find(k =>
+                name.toLowerCase().includes(k.toLowerCase())
+              );
+              
+              if (mappedNameKey) {
+                name = regionNameMap[mappedNameKey];
+              }
+              
+              // Determine if there are L/R markers in the text
+              const hasLeft = line.toLowerCase().includes("left") || line.toLowerCase().includes("lh") || line.toLowerCase().includes("l.");
+              const hasRight = line.toLowerCase().includes("right") || line.toLowerCase().includes("rh") || line.toLowerCase().includes("r.");
+              
+              if (hasLeft && hasRight && allNumbers.length >= 2) {
+                // We have left and right volumes
+                const leftVol = parseFloat(allNumbers[0]);
+                const rightVol = parseFloat(allNumbers[1]);
+                const totalVol = allNumbers.length > 2 ? parseFloat(allNumbers[2]) : leftVol + rightVol;
+                
+                // Use sample data for normative values
+                const sampleData = sampleNormativeData.find(r => r.name === name);
+                const normVal = sampleData ? sampleData.normativeValue : 0;
+                const stdDev = sampleData ? sampleData.standardDeviation : 0.1;
+                
+                brainRegions.push({
+                  name: name,
+                  leftVolume: leftVol,
+                  rightVolume: rightVol,
+                  totalVolume: totalVol,
+                  normativeValue: normVal,
+                  standardDeviation: stdDev
+                });
+              } else if (allNumbers.length >= 1) {
+                // Fallback to just total volume
+                const totalVol = parseFloat(allNumbers[0]);
+                
+                // Use sample data for normative values
+                const sampleData = sampleNormativeData.find(r => r.name === name);
+                const normVal = sampleData ? sampleData.normativeValue : 0;
+                const stdDev = sampleData ? sampleData.standardDeviation : 0.1;
+                
+                brainRegions.push({
+                  name: name,
+                  totalVolume: totalVol,
+                  normativeValue: normVal,
+                  standardDeviation: stdDev
+                });
+              }
+            }
+          }
         }
       }
     }

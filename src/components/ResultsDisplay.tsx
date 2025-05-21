@@ -65,13 +65,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
             <div className="bg-red-50 p-4 rounded-md border border-red-100">
               <div className="font-semibold text-medical-red mb-2">Atrophied Regions</div>
               <div className="text-2xl font-bold">{results.summary.atrophiedRegions.length}</div>
-              <div className="text-sm text-gray-500">Regions below normative range</div>
+              <div className="text-sm text-gray-500">Regions with Z-score ≤ -2</div>
             </div>
             
             <div className="bg-yellow-50 p-4 rounded-md border border-yellow-100">
               <div className="font-semibold text-medical-yellow mb-2">Enlarged Regions</div>
               <div className="text-2xl font-bold">{results.summary.enlargedRegions.length}</div>
-              <div className="text-sm text-gray-500">Regions above normative range</div>
+              <div className="text-sm text-gray-500">Regions with Z-score ≥ +2</div>
             </div>
             
             <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
@@ -94,7 +94,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
                 <div className="grid grid-cols-12 gap-4 p-3 font-semibold bg-gray-50 border-b">
                   <div className="col-span-3">Brain Region</div>
                   <div className="col-span-2">Status</div>
-                  <div className="col-span-2">SD Score</div>
+                  <div className="col-span-2">Z-Score</div>
                   <div className="col-span-2">Asymmetry</div>
                   <div className="col-span-3">Notes</div>
                 </div>
@@ -113,7 +113,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
                       <span className="capitalize">{result.status}</span>
                     </div>
                     <div className="col-span-2">
-                      {result.deviationScore > 0 ? '+' : ''}{result.deviationScore} SD
+                      {result.zScore > 0 ? '+' : ''}{result.zScore}
                     </div>
                     <div className="col-span-2">
                       {result.asymmetry ? 
@@ -137,13 +137,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
             <TabsContent value="atrophied" className="mt-4">
               {results.summary.atrophiedRegions.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  No atrophied regions detected
+                  No atrophied regions detected (Z-score &gt; -2)
                 </div>
               ) : (
                 <div className="rounded-md border">
                   <div className="grid grid-cols-12 gap-4 p-3 font-semibold bg-gray-50 border-b">
                     <div className="col-span-4">Brain Region</div>
-                    <div className="col-span-3">SD Score</div>
+                    <div className="col-span-3">Z-Score</div>
                     <div className="col-span-5">Clinical Implication</div>
                   </div>
                   
@@ -156,10 +156,10 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
                       >
                         <div className="col-span-4 font-medium">{result.brainRegion}</div>
                         <div className="col-span-3 text-medical-red font-medium">
-                          {result.deviationScore} SD
+                          {result.zScore}
                         </div>
                         <div className="col-span-5 text-sm">
-                          Volume is significantly below age-matched normative values
+                          Volume is significantly below age-matched normative values (Z ≤ -2)
                         </div>
                       </div>
                     ))
@@ -171,13 +171,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
             <TabsContent value="enlarged" className="mt-4">
               {results.summary.enlargedRegions.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  No enlarged regions detected
+                  No enlarged regions detected (Z-score &lt; +2)
                 </div>
               ) : (
                 <div className="rounded-md border">
                   <div className="grid grid-cols-12 gap-4 p-3 font-semibold bg-gray-50 border-b">
                     <div className="col-span-4">Brain Region</div>
-                    <div className="col-span-3">SD Score</div>
+                    <div className="col-span-3">Z-Score</div>
                     <div className="col-span-5">Clinical Implication</div>
                   </div>
                   
@@ -190,10 +190,10 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
                       >
                         <div className="col-span-4 font-medium">{result.brainRegion}</div>
                         <div className="col-span-3 text-medical-yellow font-medium">
-                          +{result.deviationScore} SD
+                          +{result.zScore}
                         </div>
                         <div className="col-span-5 text-sm">
-                          Volume is significantly above age-matched normative values
+                          Volume is significantly above age-matched normative values (Z ≥ +2)
                         </div>
                       </div>
                     ))

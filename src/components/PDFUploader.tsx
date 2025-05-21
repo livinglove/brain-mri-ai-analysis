@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { extractDataFromPDFText, getAgeAdjustedNorm } from '@/utils/analysisUtils';
-import { PatientData } from '@/types/brainData';
+import { PatientData, BrainRegion } from '@/types/brainData';
 import { Upload } from 'lucide-react';
 
 interface PDFUploaderProps {
@@ -22,6 +22,26 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
       setFile(e.target.files[0]);
       setRawText(''); // Reset raw text when a new file is selected
     }
+  };
+
+  const calculateZScores = (regions: BrainRegion[]): BrainRegion[] => {
+    return regions.map(region => {
+      let zScore: number | undefined = undefined;
+      
+      if (region.totalVolume !== undefined && 
+          region.normativeValue !== undefined && 
+          region.standardDeviation !== undefined) {
+        zScore = parseFloat(
+          ((region.totalVolume - region.normativeValue) / region.standardDeviation).toFixed(2)
+        );
+        console.log(`Calculated Z-score for ${region.name}: ${zScore}`);
+      }
+      
+      return {
+        ...region,
+        zScore
+      };
+    });
   };
 
   const extractText = async () => {
@@ -65,6 +85,11 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
                 }
                 return region;
               });
+            }
+            
+            // Calculate Z-scores for all regions
+            if (extractedData.brainRegions) {
+              extractedData.brainRegions = calculateZScores(extractedData.brainRegions);
             }
             
             toast.success("Data extracted successfully from NeuroQuant report");

@@ -41,10 +41,18 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         const normValue = getAgeAdjustedNorm(region.name, currentAge);
         console.log(`Region: ${region.name}, Previous norm: ${region.normativeValue}, New norm: ${normValue}`);
         
+        // Calculate Z-score if we have volume data
+        let zScore: number | undefined = undefined;
+        if (region.totalVolume !== undefined && normValue !== undefined) {
+          zScore = parseFloat(((region.totalVolume - normValue) / region.standardDeviation).toFixed(2));
+          console.log(`Region: ${region.name}, Z-score: ${zScore}`);
+        }
+        
         return {
           ...region,
           normativeValue: normValue !== undefined ? normValue : region.normativeValue,
-          ageAdjusted: normValue !== undefined
+          ageAdjusted: normValue !== undefined,
+          zScore
         };
       });
       
@@ -66,11 +74,49 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         const right = field === 'rightVolume' ? (value === '' ? undefined : parseFloat(value)) : newRegions[index].rightVolume;
         if (left !== undefined && right !== undefined) {
           newRegions[index].totalVolume = parseFloat((left + right).toFixed(2));
+          
+          // Update Z-score
+          if (newRegions[index].normativeValue !== undefined && newRegions[index].standardDeviation !== undefined) {
+            newRegions[index].zScore = parseFloat(
+              ((newRegions[index].totalVolume - newRegions[index].normativeValue) / newRegions[index].standardDeviation).toFixed(2)
+            );
+          }
         } else {
           newRegions[index].totalVolume = undefined;
+          newRegions[index].zScore = undefined;
         }
       }
-      // Changing totalVolume does not alter LH/RH (but totalVolume input will not be shown)
+      
+      // If total volume changes directly, update Z-score
+      if (field === 'totalVolume') {
+        const totalVol = value === '' ? undefined : parseFloat(value);
+        if (totalVol !== undefined && newRegions[index].normativeValue !== undefined && newRegions[index].standardDeviation !== undefined) {
+          newRegions[index].zScore = parseFloat(
+            ((totalVol - newRegions[index].normativeValue) / newRegions[index].standardDeviation).toFixed(2)
+          );
+        } else {
+          newRegions[index].zScore = undefined;
+        }
+      }
+      
+      // If normative value or SD changes, recalculate Z-score
+      if ((field === 'normativeValue' || field === 'standardDeviation') && newRegions[index].totalVolume !== undefined) {
+        const normValue = field === 'normativeValue' ? 
+          (value === '' ? undefined : parseFloat(value)) : 
+          newRegions[index].normativeValue;
+        
+        const stdDev = field === 'standardDeviation' ? 
+          (value === '' ? undefined : parseFloat(value)) : 
+          newRegions[index].standardDeviation;
+          
+        if (normValue !== undefined && stdDev !== undefined) {
+          newRegions[index].zScore = parseFloat(
+            ((newRegions[index].totalVolume - normValue) / stdDev).toFixed(2)
+          );
+        } else {
+          newRegions[index].zScore = undefined;
+        }
+      }
     } else {
       newRegions[index] = {
         ...newRegions[index],
