@@ -1,3 +1,4 @@
+
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
 import { getNormativeValue, getDisplayName } from './normativeData';
 
@@ -5,6 +6,13 @@ import { getNormativeValue, getDisplayName } from './normativeData';
 const Z_SCORE_THRESHOLD = 2.0;
 // Threshold for significant asymmetry (percentage)
 const ASYMMETRY_THRESHOLD = 10;
+
+// Define brainRegionNames at the top level so it can be accessed throughout the file
+const brainRegionNames = [
+  "Forebrain", "Cortical Gray", "Cortical Grey", "Hippocampus", "Hippocampi", 
+  "Amygdala", "Amygdalae", "Amydalae", "Thalamus", "Thalami", "Caudate", "Caudates", 
+  "Putamen", "Putamina", "Pallidum", "Pallidums", "Brainstem"
+];
 
 /**
  * Analyze brain regions for abnormalities based on Z-scores from age-matched controls
@@ -208,12 +216,6 @@ export function extractDataFromPDFText(text: string): Partial<PatientData> {
       const hasMultipleNumbers = numbers && numbers.length >= 2;
       
       // Check if any known brain region name is in the line
-      const brainRegionNames = [
-        "Forebrain", "Cortical Gray", "Cortical Grey", "Hippocampus", "Hippocampi", 
-        "Amygdala", "Amygdalae", "Amydalae", "Thalamus", "Thalami", "Caudate", "Caudates", 
-        "Putamen", "Putamina", "Pallidum", "Pallidums", "Brainstem"
-      ];
-      
       const hasRegionName = brainRegionNames.some(name => 
         line.toLowerCase().includes(name.toLowerCase())
       );
