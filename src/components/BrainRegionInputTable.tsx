@@ -29,7 +29,7 @@ const BrainRegionInputTable: React.FC<BrainRegionInputTableProps> = ({
         index={i}
         lhColor={lhColor}
         rhColor={rhColor}
-        onChange={onRegionChange}
+        onRegionChange={onRegionChange}
       />
     )}
   </div>
