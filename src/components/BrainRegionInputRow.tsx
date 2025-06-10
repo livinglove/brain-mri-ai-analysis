@@ -40,9 +40,9 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-14 gap-6 items-center p-4 border-b border-gray-100">
+    <div className="grid grid-cols-16 gap-8 items-center p-4 border-b border-gray-100 min-w-max">
       {/* Region Name */}
-      <div className="col-span-3 font-medium text-sm text-left">{region.name}</div>
+      <div className="col-span-4 font-medium text-sm text-left">{region.name}</div>
       
       {/* LH Volume */}
       <div className="col-span-2">
@@ -52,7 +52,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
           placeholder="LH"
           value={region.leftVolume?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'leftVolume', e.target.value)}
-          className={`text-center text-xs h-8 ${lhColor}`}
+          className={`text-center text-xs h-8 min-w-20 ${lhColor}`}
         />
       </div>
       
@@ -64,7 +64,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
           placeholder="RH"
           value={region.rightVolume?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'rightVolume', e.target.value)}
-          className={`text-center text-xs h-8 ${rhColor}`}
+          className={`text-center text-xs h-8 min-w-20 ${rhColor}`}
         />
       </div>
       
@@ -76,7 +76,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
           placeholder="Total"
           value={region.totalVolume?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'totalVolume', e.target.value)}
-          className="text-center text-xs h-8 bg-gray-50"
+          className="text-center text-xs h-8 min-w-20 bg-gray-50"
         />
       </div>
       
@@ -88,31 +88,31 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
           placeholder="Norm"
           value={region.normativeValue?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'normativeValue', e.target.value)}
-          className="text-center text-xs h-8"
+          className="text-center text-xs h-8 min-w-20"
         />
       </div>
       
       {/* Standard Deviation */}
-      <div className="col-span-1">
+      <div className="col-span-2">
         <Input
           type="number"
           step="0.001"
           placeholder="SD"
           value={region.standardDeviation?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'standardDeviation', e.target.value)}
-          className="text-center text-xs h-8"
+          className="text-center text-xs h-8 min-w-16"
         />
       </div>
       
       {/* Z-Score Display with correct coloring */}
-      <div className="col-span-1 text-center">
+      <div className="col-span-1 text-center min-w-16">
         <span className={`text-xs ${getZScoreColor(region.zScore)}`}>
           {region.zScore !== undefined ? `Z: ${region.zScore > 0 ? '+' : ''}${region.zScore}` : ''}
         </span>
       </div>
       
       {/* Age Adjusted Indicator */}
-      <div className="col-span-1 text-center">
+      <div className="col-span-1 text-center min-w-12">
         <span className="text-xs text-gray-500">
           {region.ageAdjusted ? '✓' : ''}
         </span>

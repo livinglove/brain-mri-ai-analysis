@@ -13,14 +13,14 @@ interface BrainRegionInputTableProps {
 const BrainRegionInputTable: React.FC<BrainRegionInputTableProps> = ({
   regions, lhColor, rhColor, onRegionChange
 }) => (
-  <div className="space-y-2 mt-6">
-    <div className="grid grid-cols-14 gap-6 font-bold text-sm bg-gray-100 p-4 rounded">
-      <div className="col-span-3 text-left">Brain Region</div>
+  <div className="space-y-2 mt-6 overflow-x-auto">
+    <div className="grid grid-cols-16 gap-8 font-bold text-sm bg-gray-100 p-4 rounded min-w-max">
+      <div className="col-span-4 text-left">Brain Region</div>
       <div className="col-span-2 text-center">Left (cm³)</div>
       <div className="col-span-2 text-center">Right (cm³)</div>
       <div className="col-span-2 text-center">Total (cm³)</div>
       <div className="col-span-2 text-center">Norm (cm³)</div>
-      <div className="col-span-1 text-center">SD</div>
+      <div className="col-span-2 text-center">SD</div>
       <div className="col-span-1 text-center">Z-Score</div>
       <div className="col-span-1 text-center">Status</div>
     </div>
