@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,7 +36,6 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
       console.log(`Updating normative values for age: ${currentAge}`);
       
       const updatedRegions = brainRegions.map(region => {
-        // Make sure to use the exact region name (with proper pluralization) when getting the norm
         const normValue = getAgeAdjustedNorm(region.name, currentAge);
         console.log(`Region: ${region.name}, Previous norm: ${region.normativeValue}, New norm: ${normValue}`);
         
@@ -45,7 +43,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         let zScore: number | undefined = undefined;
         let volumeForZScore: number | undefined = undefined;
         
-        // Determine volume for Z-score calculation
+        // Determine volume for Z-score calculation - ALWAYS use mean for bilateral structures
         if (region.leftVolume !== undefined && region.rightVolume !== undefined) {
           // Use mean volume (average) for Z-score since normative values are averages
           volumeForZScore = (region.leftVolume + region.rightVolume) / 2;

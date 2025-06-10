@@ -12,9 +12,9 @@ interface ResultsDisplayProps {
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => {
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case 'atrophied': return 'text-medical-red bg-red-50';
-      case 'enlarged': return 'text-medical-yellow bg-yellow-50';
-      case 'normal': return 'text-gray-700';
+      case 'atrophied': return 'text-red-600 bg-red-50';
+      case 'enlarged': return 'text-orange-600 bg-orange-50';
+      case 'normal': return 'text-green-600 bg-green-50';
       default: return 'text-gray-700';
     }
   };
@@ -23,21 +23,21 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
     switch (status) {
       case 'atrophied':
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-medical-red">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600">
             <path d="m18 6-12 12"></path>
             <path d="m6 6 12 12"></path>
           </svg>
         );
       case 'enlarged':
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-medical-yellow">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-600">
             <path d="M12 2v20"></path>
             <path d="m19 9-7 7-7-7"></path>
           </svg>
         );
       default:
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-medical-green">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
             <path d="M5 12h14"></path>
           </svg>
         );
@@ -65,13 +65,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-red-50 p-4 rounded-md border border-red-100">
-              <div className="font-semibold text-medical-red mb-2">Atrophied Regions</div>
+              <div className="font-semibold text-red-600 mb-2">Atrophied Regions</div>
               <div className="text-2xl font-bold">{results.summary.atrophiedRegions.length}</div>
               <div className="text-sm text-gray-500">Regions with Z-score ≤ -2</div>
             </div>
             
-            <div className="bg-yellow-50 p-4 rounded-md border border-yellow-100">
-              <div className="font-semibold text-medical-yellow mb-2">Enlarged Regions</div>
+            <div className="bg-orange-50 p-4 rounded-md border border-orange-100">
+              <div className="font-semibold text-orange-600 mb-2">Enlarged Regions</div>
               <div className="text-2xl font-bold">{results.summary.enlargedRegions.length}</div>
               <div className="text-sm text-gray-500">Regions with Z-score ≥ +2</div>
             </div>
@@ -97,7 +97,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
                   <div className="col-span-2">Brain Region</div>
                   <div className="col-span-1">Status</div>
                   <div className="col-span-1">Z-Score</div>
-                  <div className="col-span-2">Actual Volume</div>
+                  <div className="col-span-2">Mean Volume</div>
                   <div className="col-span-2">Normative Value</div>
                   <div className="col-span-1">Asymmetry</div>
                   <div className="col-span-3">Notes</div>
@@ -112,18 +112,22 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
                     }`}
                   >
                     <div className="col-span-2 font-medium">{result.brainRegion}</div>
-                    <div className={`col-span-1 flex items-center gap-1 font-medium ${getStatusColor(result.status)}`}>
+                    <div className={`col-span-1 flex items-center gap-1 font-medium px-2 py-1 rounded ${getStatusColor(result.status)}`}>
                       {getStatusIcon(result.status)}
                       <span className="capitalize">{result.status}</span>
                     </div>
-                    <div className="col-span-1 font-mono">
+                    <div className={`col-span-1 font-mono font-semibold ${
+                      result.zScore <= -2 ? 'text-red-600' : 
+                      result.zScore >= 2 ? 'text-orange-600' : 
+                      'text-green-600'
+                    }`}>
                       {result.zScore > 0 ? '+' : ''}{result.zScore}
                     </div>
                     <div className="col-span-2">
-                      {result.actualVolume ? result.actualVolume.toFixed(2) : 'N/A'}
+                      {result.actualVolume ? result.actualVolume.toFixed(3) : 'N/A'}
                     </div>
                     <div className="col-span-2">
-                      {result.normativeValue ? result.normativeValue.toFixed(2) : 'N/A'}
+                      {result.normativeValue ? result.normativeValue.toFixed(3) : 'N/A'}
                     </div>
                     <div className="col-span-1">
                       {result.asymmetry ? 
