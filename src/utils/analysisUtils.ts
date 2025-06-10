@@ -1,4 +1,5 @@
 
+
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
 import { getNormativeValue, getDisplayName } from './normativeData';
 
@@ -59,7 +60,9 @@ function analyzeRegion(region: BrainRegion): AnalysisResult {
   const result: AnalysisResult = {
     brainRegion: region.name,
     status: 'normal',
-    zScore: 0
+    zScore: 0,
+    actualVolume: region.totalVolume,
+    normativeValue: region.normativeValue
   };
   
   // If we have total volume, use it for analysis
@@ -68,9 +71,9 @@ function analyzeRegion(region: BrainRegion): AnalysisResult {
     const zScore = (region.totalVolume - region.normativeValue) / region.standardDeviation;
     result.zScore = parseFloat(zScore.toFixed(2));
     
-    // Use Z-score for determining status:
-    // Z-score < -2 means significantly smaller (atrophied)
-    // Z-score > +2 means significantly larger (enlarged)
+    // Correct Z-score logic:
+    // Negative Z-score ≤ -2 means significantly smaller (atrophied)
+    // Positive Z-score ≥ +2 means significantly larger (enlarged)
     if (zScore <= -Z_SCORE_THRESHOLD) {
       result.status = 'atrophied';
     } else if (zScore >= Z_SCORE_THRESHOLD) {
@@ -78,7 +81,7 @@ function analyzeRegion(region: BrainRegion): AnalysisResult {
     }
 
     // Add console logging to help debug
-    console.log(`Region ${region.name}: Volume=${region.totalVolume}, Norm=${region.normativeValue}, SD=${region.standardDeviation}, Z-Score=${zScore}, Status=${result.status}`);
+    console.log(`Region ${region.name}: Actual=${region.totalVolume}, Norm=${region.normativeValue}, SD=${region.standardDeviation}, Z-Score=${zScore}, Status=${result.status}`);
   }
   
   // Check for asymmetry if we have left and right volumes

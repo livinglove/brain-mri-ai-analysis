@@ -20,7 +20,9 @@ export interface PatientData {
 export interface AnalysisResult {
   brainRegion: string;
   status: 'normal' | 'atrophied' | 'enlarged';
-  zScore: number; // Changed from deviationScore to zScore
+  zScore: number;
+  actualVolume?: number;
+  normativeValue?: number;
   asymmetry?: {
     difference: number; // Absolute difference
     percentDifference: number; // Percentage difference

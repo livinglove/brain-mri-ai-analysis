@@ -24,13 +24,15 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
       case 'atrophied':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-medical-red">
-            <path d="m6 18 6-12 6 12"></path>
+            <path d="m18 6-12 12"></path>
+            <path d="m6 6 12 12"></path>
           </svg>
         );
       case 'enlarged':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-medical-yellow">
-            <path d="m6 6 6 12 6-12"></path>
+            <path d="M12 2v20"></path>
+            <path d="m19 9-7 7-7-7"></path>
           </svg>
         );
       default:
@@ -91,31 +93,39 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
             
             <TabsContent value="all" className="mt-4">
               <div className="rounded-md border">
-                <div className="grid grid-cols-12 gap-4 p-3 font-semibold bg-gray-50 border-b">
-                  <div className="col-span-3">Brain Region</div>
-                  <div className="col-span-2">Status</div>
-                  <div className="col-span-2">Z-Score</div>
-                  <div className="col-span-2">Asymmetry</div>
+                <div className="grid grid-cols-12 gap-4 p-3 font-semibold bg-gray-50 border-b text-sm">
+                  <div className="col-span-2">Brain Region</div>
+                  <div className="col-span-1">Status</div>
+                  <div className="col-span-1">Z-Score</div>
+                  <div className="col-span-2">Actual Volume</div>
+                  <div className="col-span-2">Normative Value</div>
+                  <div className="col-span-1">Asymmetry</div>
                   <div className="col-span-3">Notes</div>
                 </div>
                 
                 {results.results.map((result, index) => (
                   <div 
                     key={`result-${index}`}
-                    className={`grid grid-cols-12 gap-4 p-3 border-b last:border-b-0 ${
+                    className={`grid grid-cols-12 gap-4 p-3 border-b last:border-b-0 text-sm ${
                       result.status !== 'normal' || (result.asymmetry && result.asymmetry.significantAsymmetry) 
                         ? 'bg-gray-50' : ''
                     }`}
                   >
-                    <div className="col-span-3 font-medium">{result.brainRegion}</div>
-                    <div className={`col-span-2 flex items-center gap-1 font-medium ${getStatusColor(result.status)}`}>
+                    <div className="col-span-2 font-medium">{result.brainRegion}</div>
+                    <div className={`col-span-1 flex items-center gap-1 font-medium ${getStatusColor(result.status)}`}>
                       {getStatusIcon(result.status)}
                       <span className="capitalize">{result.status}</span>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-1 font-mono">
                       {result.zScore > 0 ? '+' : ''}{result.zScore}
                     </div>
                     <div className="col-span-2">
+                      {result.actualVolume ? result.actualVolume.toFixed(2) : 'N/A'}
+                    </div>
+                    <div className="col-span-2">
+                      {result.normativeValue ? result.normativeValue.toFixed(2) : 'N/A'}
+                    </div>
+                    <div className="col-span-1">
                       {result.asymmetry ? 
                         <span className={result.asymmetry.significantAsymmetry ? 'text-medical-blue font-medium' : ''}>
                           {result.asymmetry.percentDifference.toFixed(1)}%
@@ -124,8 +134,8 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
                       }
                     </div>
                     <div className="col-span-3 text-sm text-gray-600">
-                      {result.status === 'atrophied' && 'Volume significantly below normal range'}
-                      {result.status === 'enlarged' && 'Volume significantly above normal range'}
+                      {result.status === 'atrophied' && 'Volume significantly below normal range (Z ≤ -2)'}
+                      {result.status === 'enlarged' && 'Volume significantly above normal range (Z ≥ +2)'}
                       {result.asymmetry?.significantAsymmetry && result.status === 'normal' && 'Significant asymmetry detected'}
                       {result.status === 'normal' && (!result.asymmetry || !result.asymmetry.significantAsymmetry) && 'Within normal limits'}
                     </div>
@@ -142,9 +152,11 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
               ) : (
                 <div className="rounded-md border">
                   <div className="grid grid-cols-12 gap-4 p-3 font-semibold bg-gray-50 border-b">
-                    <div className="col-span-4">Brain Region</div>
-                    <div className="col-span-3">Z-Score</div>
-                    <div className="col-span-5">Clinical Implication</div>
+                    <div className="col-span-3">Brain Region</div>
+                    <div className="col-span-2">Z-Score</div>
+                    <div className="col-span-2">Actual Volume</div>
+                    <div className="col-span-2">Normative Value</div>
+                    <div className="col-span-3">Clinical Implication</div>
                   </div>
                   
                   {results.results
@@ -154,11 +166,17 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
                         key={`atrophied-${index}`}
                         className="grid grid-cols-12 gap-4 p-3 border-b last:border-b-0 bg-red-50"
                       >
-                        <div className="col-span-4 font-medium">{result.brainRegion}</div>
-                        <div className="col-span-3 text-medical-red font-medium">
+                        <div className="col-span-3 font-medium">{result.brainRegion}</div>
+                        <div className="col-span-2 text-medical-red font-medium font-mono">
                           {result.zScore}
                         </div>
-                        <div className="col-span-5 text-sm">
+                        <div className="col-span-2">
+                          {result.actualVolume ? result.actualVolume.toFixed(2) : 'N/A'}
+                        </div>
+                        <div className="col-span-2">
+                          {result.normativeValue ? result.normativeValue.toFixed(2) : 'N/A'}
+                        </div>
+                        <div className="col-span-3 text-sm">
                           Volume is significantly below age-matched normative values (Z ≤ -2)
                         </div>
                       </div>
@@ -176,9 +194,11 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
               ) : (
                 <div className="rounded-md border">
                   <div className="grid grid-cols-12 gap-4 p-3 font-semibold bg-gray-50 border-b">
-                    <div className="col-span-4">Brain Region</div>
-                    <div className="col-span-3">Z-Score</div>
-                    <div className="col-span-5">Clinical Implication</div>
+                    <div className="col-span-3">Brain Region</div>
+                    <div className="col-span-2">Z-Score</div>
+                    <div className="col-span-2">Actual Volume</div>
+                    <div className="col-span-2">Normative Value</div>
+                    <div className="col-span-3">Clinical Implication</div>
                   </div>
                   
                   {results.results
@@ -188,11 +208,17 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, onReset }) => 
                         key={`enlarged-${index}`}
                         className="grid grid-cols-12 gap-4 p-3 border-b last:border-b-0 bg-yellow-50"
                       >
-                        <div className="col-span-4 font-medium">{result.brainRegion}</div>
-                        <div className="col-span-3 text-medical-yellow font-medium">
+                        <div className="col-span-3 font-medium">{result.brainRegion}</div>
+                        <div className="col-span-2 text-medical-yellow font-medium font-mono">
                           +{result.zScore}
                         </div>
-                        <div className="col-span-5 text-sm">
+                        <div className="col-span-2">
+                          {result.actualVolume ? result.actualVolume.toFixed(2) : 'N/A'}
+                        </div>
+                        <div className="col-span-2">
+                          {result.normativeValue ? result.normativeValue.toFixed(2) : 'N/A'}
+                        </div>
+                        <div className="col-span-3 text-sm">
                           Volume is significantly above age-matched normative values (Z ≥ +2)
                         </div>
                       </div>
