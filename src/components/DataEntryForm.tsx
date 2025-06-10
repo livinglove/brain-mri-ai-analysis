@@ -43,9 +43,19 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         
         // Calculate Z-score if we have volume data
         let zScore: number | undefined = undefined;
-        if (region.totalVolume !== undefined && normValue !== undefined) {
-          zScore = parseFloat(((region.totalVolume - normValue) / region.standardDeviation).toFixed(2));
-          console.log(`Region: ${region.name}, Z-score: ${zScore}`);
+        let volumeForZScore: number | undefined = undefined;
+        
+        // Determine volume for Z-score calculation
+        if (region.leftVolume !== undefined && region.rightVolume !== undefined) {
+          // Use mean volume (average) for Z-score since normative values are averages
+          volumeForZScore = (region.leftVolume + region.rightVolume) / 2;
+        } else if (region.totalVolume !== undefined) {
+          volumeForZScore = region.totalVolume;
+        }
+        
+        if (volumeForZScore !== undefined && normValue !== undefined) {
+          zScore = parseFloat(((volumeForZScore - normValue) / region.standardDeviation).toFixed(2));
+          console.log(`Region: ${region.name}, Volume for Z-score: ${volumeForZScore}, Z-score: ${zScore}`);
         }
         
         return {
@@ -68,7 +78,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         [field]: value === '' ? undefined : parseFloat(value)
       };
 
-      // If LH/RH changes, always auto-update Total
+      // If LH/RH changes, always auto-update Total and Z-score
       if (field === 'leftVolume' || field === 'rightVolume') {
         const left = field === 'leftVolume' ? (value === '' ? undefined : parseFloat(value)) : newRegions[index].leftVolume;
         const right = field === 'rightVolume' ? (value === '' ? undefined : parseFloat(value)) : newRegions[index].rightVolume;

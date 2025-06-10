@@ -1,5 +1,4 @@
 
-
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
 import { getNormativeValue, getDisplayName } from './normativeData';
 
@@ -65,14 +64,15 @@ function analyzeRegion(region: BrainRegion): AnalysisResult {
     normativeValue: region.normativeValue
   };
   
-  // Calculate the actual volume for analysis
+  // Calculate the actual volume for analysis - ALWAYS use mean for bilateral structures
   let volumeForAnalysis: number | undefined;
   
-  if (region.totalVolume !== undefined) {
-    volumeForAnalysis = region.totalVolume;
-  } else if (region.leftVolume !== undefined && region.rightVolume !== undefined) {
-    // Calculate mean volume (average of left and right) since normative values are averages
+  if (region.leftVolume !== undefined && region.rightVolume !== undefined) {
+    // Always calculate mean volume (average of left and right) since normative values are averages
     volumeForAnalysis = (region.leftVolume + region.rightVolume) / 2;
+    result.actualVolume = volumeForAnalysis; // Store the mean volume as actualVolume for results
+  } else if (region.totalVolume !== undefined) {
+    volumeForAnalysis = region.totalVolume;
     result.actualVolume = volumeForAnalysis;
   }
   
