@@ -18,12 +18,25 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
   rhColor,
   onRegionChange
 }) => {
-  // Helper function to get Z-score color
+  // Helper function to get Z-score color - fixed logic
   const getZScoreColor = (zScore: number | undefined): string => {
     if (zScore === undefined) return '';
-    if (zScore <= -2) return 'text-red-600 font-semibold'; // Atrophied (red)
-    if (zScore >= 2) return 'text-orange-600 font-semibold'; // Enlarged (orange/yellow)
-    return 'text-green-600'; // Normal (green)
+    console.log(`Z-score color check for region ${region.name}: Z-score = ${zScore}`);
+    
+    if (zScore <= -2) {
+      console.log('Applying red color for Z <= -2');
+      return 'text-red-600 font-semibold'; // Atrophied (red)
+    }
+    if (zScore >= 2) {
+      console.log('Applying orange color for Z >= 2');
+      return 'text-orange-600 font-semibold'; // Enlarged (orange)
+    }
+    if (zScore < 0) {
+      console.log('Applying red color for negative Z-score');
+      return 'text-red-600'; // Negative but not severely atrophied
+    }
+    console.log('Applying green color for normal/positive Z-score');
+    return 'text-green-600'; // Normal/positive (green)
   };
 
   return (
