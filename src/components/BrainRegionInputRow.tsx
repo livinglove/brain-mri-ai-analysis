@@ -40,43 +40,43 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-16 gap-8 items-center p-4 border-b border-gray-100 min-w-max">
+    <div className="grid grid-cols-12 gap-3 items-center p-3 border-b border-gray-100 min-w-max">
       {/* Region Name */}
-      <div className="col-span-4 font-medium text-sm text-left">{region.name}</div>
+      <div className="col-span-3 font-medium text-sm text-left">{region.name}</div>
       
       {/* LH Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1">
         <Input
           type="number"
           step="0.01"
           placeholder="LH"
           value={region.leftVolume?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'leftVolume', e.target.value)}
-          className={`text-center text-xs h-8 min-w-20 ${lhColor}`}
+          className={`text-center text-xs h-8 w-full ${lhColor}`}
         />
       </div>
       
       {/* RH Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1">
         <Input
           type="number"
           step="0.01"
           placeholder="RH"
           value={region.rightVolume?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'rightVolume', e.target.value)}
-          className={`text-center text-xs h-8 min-w-20 ${rhColor}`}
+          className={`text-center text-xs h-8 w-full ${rhColor}`}
         />
       </div>
       
       {/* Total Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1">
         <Input
           type="number"
           step="0.01"
           placeholder="Total"
           value={region.totalVolume?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'totalVolume', e.target.value)}
-          className="text-center text-xs h-8 min-w-20 bg-gray-50"
+          className="text-center text-xs h-8 w-full bg-gray-50"
         />
       </div>
       
@@ -88,31 +88,31 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
           placeholder="Norm"
           value={region.normativeValue?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'normativeValue', e.target.value)}
-          className="text-center text-xs h-8 min-w-20"
+          className="text-center text-xs h-8 w-full"
         />
       </div>
       
       {/* Standard Deviation */}
-      <div className="col-span-2">
+      <div className="col-span-1">
         <Input
           type="number"
           step="0.001"
           placeholder="SD"
           value={region.standardDeviation?.toString() || ''}
           onChange={(e) => onRegionChange(index, 'standardDeviation', e.target.value)}
-          className="text-center text-xs h-8 min-w-16"
+          className="text-center text-xs h-8 w-full"
         />
       </div>
       
       {/* Z-Score Display with correct coloring */}
-      <div className="col-span-1 text-center min-w-16">
+      <div className="col-span-2 text-center">
         <span className={`text-xs ${getZScoreColor(region.zScore)}`}>
           {region.zScore !== undefined ? `Z: ${region.zScore > 0 ? '+' : ''}${region.zScore}` : ''}
         </span>
       </div>
       
       {/* Age Adjusted Indicator */}
-      <div className="col-span-1 text-center min-w-12">
+      <div className="col-span-1 text-center">
         <span className="text-xs text-gray-500">
           {region.ageAdjusted ? '✓' : ''}
         </span>
