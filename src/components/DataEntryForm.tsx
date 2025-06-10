@@ -73,12 +73,14 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         const left = field === 'leftVolume' ? (value === '' ? undefined : parseFloat(value)) : newRegions[index].leftVolume;
         const right = field === 'rightVolume' ? (value === '' ? undefined : parseFloat(value)) : newRegions[index].rightVolume;
         if (left !== undefined && right !== undefined) {
+          // Store sum as totalVolume for display purposes
           newRegions[index].totalVolume = parseFloat((left + right).toFixed(2));
           
-          // Update Z-score
+          // Calculate Z-score using mean volume (average of left and right)
+          const meanVolume = (left + right) / 2;
           if (newRegions[index].normativeValue !== undefined && newRegions[index].standardDeviation !== undefined) {
             newRegions[index].zScore = parseFloat(
-              ((newRegions[index].totalVolume - newRegions[index].normativeValue) / newRegions[index].standardDeviation).toFixed(2)
+              ((meanVolume - newRegions[index].normativeValue) / newRegions[index].standardDeviation).toFixed(2)
             );
           }
         } else {
@@ -87,7 +89,7 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
         }
       }
       
-      // If total volume changes directly, update Z-score
+      // If total volume changes directly, use it as-is for Z-score calculation
       if (field === 'totalVolume') {
         const totalVol = value === '' ? undefined : parseFloat(value);
         if (totalVol !== undefined && newRegions[index].normativeValue !== undefined && newRegions[index].standardDeviation !== undefined) {
@@ -110,8 +112,14 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ onDataSubmit, initialData
           newRegions[index].standardDeviation;
           
         if (normValue !== undefined && stdDev !== undefined) {
+          // Use mean volume if we have left/right, otherwise use total
+          let volumeForZScore = newRegions[index].totalVolume;
+          if (newRegions[index].leftVolume !== undefined && newRegions[index].rightVolume !== undefined) {
+            volumeForZScore = (newRegions[index].leftVolume + newRegions[index].rightVolume) / 2;
+          }
+          
           newRegions[index].zScore = parseFloat(
-            ((newRegions[index].totalVolume - normValue) / stdDev).toFixed(2)
+            ((volumeForZScore - normValue) / stdDev).toFixed(2)
           );
         } else {
           newRegions[index].zScore = undefined;
