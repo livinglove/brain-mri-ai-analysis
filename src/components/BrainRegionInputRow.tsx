@@ -40,7 +40,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-12 gap-2 items-center p-3 border-b border-gray-100">
+    <div className="grid grid-cols-12 gap-4 items-center p-3 border-b border-gray-100">
       {/* Region Name */}
       <div className="col-span-2 font-medium text-sm text-left">{region.name}</div>
       
