@@ -45,7 +45,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       <div className="col-span-2 font-medium text-sm text-left">{region.name}</div>
       
       {/* LH Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1">
         <Input
           type="number"
           step="0.01"
@@ -57,7 +57,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* RH Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1">
         <Input
           type="number"
           step="0.01"
@@ -69,7 +69,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* Total Volume */}
-      <div className="col-span-1">
+      <div className="col-span-2">
         <Input
           type="number"
           step="0.01"
@@ -80,8 +80,8 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
         />
       </div>
       
-      {/* Normative Value */}
-      <div className="col-span-2">
+      {/* Normative Value with Age Adjusted Badge */}
+      <div className="col-span-2 relative">
         <Input
           type="number"
           step="0.01"
@@ -90,10 +90,15 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
           onChange={(e) => onRegionChange(index, 'normativeValue', e.target.value)}
           className="text-center text-xs h-8 w-full"
         />
+        {region.ageAdjusted && (
+          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+            ✓
+          </span>
+        )}
       </div>
       
       {/* Standard Deviation */}
-      <div className="col-span-1">
+      <div className="col-span-2">
         <Input
           type="number"
           step="0.001"
@@ -105,16 +110,9 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* Z-Score Display with correct coloring */}
-      <div className="col-span-1 text-center">
+      <div className="col-span-2 text-center">
         <span className={`text-xs ${getZScoreColor(region.zScore)}`}>
           {region.zScore !== undefined ? `Z: ${region.zScore > 0 ? '+' : ''}${region.zScore}` : ''}
-        </span>
-      </div>
-      
-      {/* Age Adjusted Indicator */}
-      <div className="col-span-1 text-center">
-        <span className="text-xs text-gray-500">
-          {region.ageAdjusted ? '✓' : ''}
         </span>
       </div>
     </div>
