@@ -3,6 +3,7 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Check } from "lucide-react";
 
 export interface PatientInfoProps {
   patientId: string;
@@ -32,7 +33,10 @@ const PatientInfoForm: React.FC<PatientInfoProps> = ({
       />
     </div>
     <div className="space-y-2">
-      <Label htmlFor="age">Age</Label>
+      <Label htmlFor="age" className="flex items-center gap-2">
+        Age
+        {age && <Check className="h-4 w-4 text-green-600" />}
+      </Label>
       <Input
         id="age"
         type="number"

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Check } from 'lucide-react';
 import { BrainRegion } from '@/types/brainData';
 
 interface BrainRegionInputRowProps {
@@ -23,27 +24,19 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
   const getZScoreDisplay = (zScore: number | undefined): { color: string; text: string } => {
     if (zScore === undefined) return { color: '', text: '' };
     
-    let status = '';
-    let color = '';
+    const zScoreText = zScore > 0 ? `+${zScore}` : `${zScore}`;
     
     if (zScore <= -2) {
-      status = 'Major Atrophy';
-      color = 'text-red-600 font-semibold';
+      return { color: 'text-red-600 font-bold', text: `${zScoreText} Atr` };
     } else if (zScore <= -1) {
-      status = 'Atrophy';
-      color = 'text-red-500';
+      return { color: 'text-red-500', text: `${zScoreText} Atr` };
     } else if (zScore >= 2) {
-      status = 'Major Enlargement';
-      color = 'text-orange-600 font-semibold';
+      return { color: 'text-green-600 font-bold', text: `${zScoreText} Enl` };
     } else if (zScore >= 1) {
-      status = 'Enlargement';
-      color = 'text-orange-500';
+      return { color: 'text-green-500', text: `${zScoreText} Enl` };
     } else {
-      status = `Z: ${zScore > 0 ? '+' : ''}${zScore}`;
-      color = 'text-green-600';
+      return { color: 'text-gray-900', text: zScoreText };
     }
-    
-    return { color, text: status };
   };
 
   const zScoreDisplay = getZScoreDisplay(region.zScore);
@@ -51,10 +44,10 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
   return (
     <div className="grid grid-cols-12 gap-3 items-center p-3 border-b border-gray-100 w-full">
       {/* Region Name */}
-      <div className="col-span-1 font-medium text-xs text-left">{region.name}</div>
+      <div className="col-span-2 font-medium text-xs text-left">{region.name}</div>
       
       {/* LH Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1.5">
         <Input
           type="number"
           step="0.01"
@@ -66,7 +59,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* RH Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1.5">
         <Input
           type="number"
           step="0.01"
@@ -89,8 +82,8 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
         />
       </div>
       
-      {/* Normative Value with Age Adjusted Badge */}
-      <div className="col-span-2 relative">
+      {/* Normative Value with Age Adjusted Check */}
+      <div className="col-span-1.5 relative">
         <Input
           type="number"
           step="0.01"
@@ -100,14 +93,12 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
           className="text-center text-xs h-8 w-full"
         />
         {region.ageAdjusted && (
-          <Badge variant="secondary" className="absolute -top-2 -right-1 text-xs px-1 py-0 h-4">
-            Age-Adj
-          </Badge>
+          <Check className="absolute -top-1 -right-1 h-3 w-3 text-green-600" />
         )}
       </div>
       
       {/* Standard Deviation */}
-      <div className="col-span-1">
+      <div className="col-span-1.5">
         <Input
           type="number"
           step="0.001"
