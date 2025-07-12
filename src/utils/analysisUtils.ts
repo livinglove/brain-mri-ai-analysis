@@ -2,8 +2,9 @@
 import { BrainRegion, PatientData, AnalysisResult, AnalysisResults } from '../types/brainData';
 import { getNormativeValue, getDisplayName } from './normativeData';
 
-// Z-score thresholds for abnormality
-const Z_SCORE_THRESHOLD = 2.0;
+// Z-score thresholds for abnormality - updated to use 1 SD as threshold
+const Z_SCORE_THRESHOLD = 1.0;
+const MAJOR_Z_SCORE_THRESHOLD = 2.0;
 // Threshold for significant asymmetry (percentage)
 const ASYMMETRY_THRESHOLD = 10;
 
@@ -83,8 +84,8 @@ function analyzeRegion(region: BrainRegion): AnalysisResult {
     result.zScore = parseFloat(zScore.toFixed(2));
     
     // Z-score logic:
-    // Negative Z-score ≤ -2 means significantly smaller (atrophied)
-    // Positive Z-score ≥ +2 means significantly larger (enlarged)
+    // Negative Z-score ≤ -1 means atrophied, ≤ -2 means major atrophy
+    // Positive Z-score ≥ +1 means enlarged, ≥ +2 means major enlargement
     if (zScore <= -Z_SCORE_THRESHOLD) {
       result.status = 'atrophied';
     } else if (zScore >= Z_SCORE_THRESHOLD) {

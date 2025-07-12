@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { extractDataFromPDFText, getAgeAdjustedNorm } from '@/utils/analysisUtils';
+import { getAgeAdjustedNorm } from '@/utils/analysisUtils';
+import { extractDataFromPDF } from '@/utils/pdfExtractor';
 import { PatientData, BrainRegion } from '@/types/brainData';
 import { Upload } from 'lucide-react';
 
@@ -52,70 +53,44 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
 
     setIsLoading(true);
     try {
-      // In a real app, we'd use a PDF library like pdf.js
-      // This is a simplified version using FileReader
-      const reader = new FileReader();
+      // Use the new PDF.js based extractor
+      const extractedData = await extractDataFromPDF(file);
+      setRawText(`Extracted ${extractedData.brainRegions?.length || 0} brain regions from PDF`);
       
-      reader.onload = (e) => {
-        try {
-          // In reality, we'd parse the PDF properly
-          // For demo purposes, we'll just use the raw text
-          const text = e.target?.result as string || "";
-          setRawText(text);
+      if (Object.keys(extractedData).length > 0 && extractedData.brainRegions && extractedData.brainRegions.length > 0) {
+        // Apply age-adjusted normative values if age is available
+        if (extractedData.age) {
+          const age = extractedData.age;
+          console.log(`Applying age-adjusted norms for age: ${age} to extracted data`);
           
-          // Extract data from PDF text
-          const extractedData = extractDataFromPDFText(text);
-          
-          if (Object.keys(extractedData).length > 0 && extractedData.brainRegions && extractedData.brainRegions.length > 0) {
-            // Apply age-adjusted normative values if age is available
-            if (extractedData.age) {
-              const age = extractedData.age;
-              console.log(`Applying age-adjusted norms for age: ${age} to extracted data`);
-              
-              extractedData.brainRegions = extractedData.brainRegions.map(region => {
-                // Ensure we're using the correct name when getting normative values
-                const normValue = getAgeAdjustedNorm(region.name, age);
-                if (normValue !== undefined) {
-                  console.log(`Region: ${region.name}, Updated norm: ${normValue}`);
-                  return {
-                    ...region,
-                    normativeValue: normValue,
-                    ageAdjusted: true
-                  };
-                }
-                return region;
-              });
+          extractedData.brainRegions = extractedData.brainRegions.map(region => {
+            // Ensure we're using the correct name when getting normative values
+            const normValue = getAgeAdjustedNorm(region.name, age);
+            if (normValue !== undefined) {
+              console.log(`Region: ${region.name}, Updated norm: ${normValue}`);
+              return {
+                ...region,
+                normativeValue: normValue,
+                ageAdjusted: true
+              };
             }
-            
-            // Calculate Z-scores for all regions
-            if (extractedData.brainRegions) {
-              extractedData.brainRegions = calculateZScores(extractedData.brainRegions);
-            }
-            
-            toast.success("Data extracted successfully from NeuroQuant report");
-            onDataExtracted(extractedData);
-          } else {
-            toast.error("Could not find NeuroQuant Morphometry data in this PDF");
-          }
-        } catch (err) {
-          console.error("PDF processing error:", err);
-          toast.error("Error processing PDF");
+            return region;
+          });
         }
-        setIsLoading(false);
-      };
-      
-      reader.onerror = () => {
-        toast.error("Error reading file");
-        setIsLoading(false);
-      };
-      
-      // For demo purposes, we're reading as text
-      // In a real app, we'd use readAsArrayBuffer with pdf.js
-      reader.readAsText(file);
-      
+        
+        // Calculate Z-scores for all regions
+        if (extractedData.brainRegions) {
+          extractedData.brainRegions = calculateZScores(extractedData.brainRegions);
+        }
+        
+        toast.success("Data extracted successfully from NeuroQuant report");
+        onDataExtracted(extractedData);
+      } else {
+        toast.error("Could not find NeuroQuant Morphometry data in this PDF");
+      }
     } catch (err) {
       console.error("PDF upload error:", err);
-      toast.error("Error uploading PDF");
+      toast.error("Error uploading PDF: " + (err as Error).message);
       setIsLoading(false);
     }
   };

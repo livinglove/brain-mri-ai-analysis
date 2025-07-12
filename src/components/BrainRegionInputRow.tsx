@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { BrainRegion } from '@/types/brainData';
 
 interface BrainRegionInputRowProps {
@@ -18,34 +19,42 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
   rhColor,
   onRegionChange
 }) => {
-  // Helper function to get Z-score color - fixed logic
-  const getZScoreColor = (zScore: number | undefined): string => {
-    if (zScore === undefined) return '';
-    console.log(`Z-score color check for region ${region.name}: Z-score = ${zScore}`);
+  // Helper function to get Z-score color and status text
+  const getZScoreDisplay = (zScore: number | undefined): { color: string; text: string } => {
+    if (zScore === undefined) return { color: '', text: '' };
+    
+    let status = '';
+    let color = '';
     
     if (zScore <= -2) {
-      console.log('Applying red color for Z <= -2');
-      return 'text-red-600 font-semibold'; // Atrophied (red)
+      status = 'Major Atrophy';
+      color = 'text-red-600 font-semibold';
+    } else if (zScore <= -1) {
+      status = 'Atrophy';
+      color = 'text-red-500';
+    } else if (zScore >= 2) {
+      status = 'Major Enlargement';
+      color = 'text-orange-600 font-semibold';
+    } else if (zScore >= 1) {
+      status = 'Enlargement';
+      color = 'text-orange-500';
+    } else {
+      status = `Z: ${zScore > 0 ? '+' : ''}${zScore}`;
+      color = 'text-green-600';
     }
-    if (zScore >= 2) {
-      console.log('Applying orange color for Z >= 2');
-      return 'text-orange-600 font-semibold'; // Enlarged (orange)
-    }
-    if (zScore < 0) {
-      console.log('Applying red color for negative Z-score');
-      return 'text-red-600'; // Negative but not severely atrophied
-    }
-    console.log('Applying green color for normal/positive Z-score');
-    return 'text-green-600'; // Normal/positive (green)
+    
+    return { color, text: status };
   };
 
+  const zScoreDisplay = getZScoreDisplay(region.zScore);
+
   return (
-    <div className="grid grid-cols-12 gap-4 items-center p-3 border-b border-gray-100 w-full">
+    <div className="grid grid-cols-12 gap-3 items-center p-3 border-b border-gray-100 w-full">
       {/* Region Name */}
-      <div className="col-span-2 font-medium text-sm text-left">{region.name}</div>
+      <div className="col-span-1 font-medium text-xs text-left">{region.name}</div>
       
       {/* LH Volume */}
-      <div className="col-span-1">
+      <div className="col-span-2">
         <Input
           type="number"
           step="0.01"
@@ -57,7 +66,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* RH Volume */}
-      <div className="col-span-1">
+      <div className="col-span-2">
         <Input
           type="number"
           step="0.01"
@@ -91,14 +100,14 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
           className="text-center text-xs h-8 w-full"
         />
         {region.ageAdjusted && (
-          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-            ✓
-          </span>
+          <Badge variant="secondary" className="absolute -top-2 -right-1 text-xs px-1 py-0 h-4">
+            Age-Adj
+          </Badge>
         )}
       </div>
       
       {/* Standard Deviation */}
-      <div className="col-span-2">
+      <div className="col-span-1">
         <Input
           type="number"
           step="0.001"
@@ -109,10 +118,10 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
         />
       </div>
       
-      {/* Z-Score Display with correct coloring */}
+      {/* Z-Score Display with status */}
       <div className="col-span-2 text-center">
-        <span className={`text-xs ${getZScoreColor(region.zScore)}`}>
-          {region.zScore !== undefined ? `Z: ${region.zScore > 0 ? '+' : ''}${region.zScore}` : ''}
+        <span className={`text-xs ${zScoreDisplay.color}`}>
+          {zScoreDisplay.text}
         </span>
       </div>
     </div>
