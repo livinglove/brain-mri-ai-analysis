@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { getAgeAdjustedNorm } from '@/utils/analysisUtils';
 import { extractDataFromPDF } from '@/utils/pdfExtractor';
@@ -17,6 +19,7 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
   const [file, setFile] = useState<File | null>(null);
   const [rawText, setRawText] = useState<string>('');
   const [showDebug, setShowDebug] = useState(false);
+  const [manualPatientId, setManualPatientId] = useState<string>('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -58,6 +61,11 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
       setRawText(`Extracted ${extractedData.brainRegions?.length || 0} brain regions from PDF`);
       
       if (Object.keys(extractedData).length > 0 && extractedData.brainRegions && extractedData.brainRegions.length > 0) {
+        // Use manual patient ID if provided, otherwise use extracted one
+        if (manualPatientId.trim()) {
+          extractedData.patientId = manualPatientId.trim();
+        }
+        
         // Apply age-adjusted normative values if age is available
         if (extractedData.age) {
           const age = extractedData.age;
@@ -110,6 +118,18 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="manual-patient-id">Patient ID (optional)</Label>
+          <Input
+            id="manual-patient-id"
+            type="text"
+            placeholder="Enter patient ID if not in PDF"
+            value={manualPatientId}
+            onChange={(e) => setManualPatientId(e.target.value)}
+            className="h-10"
+          />
+        </div>
+        
         <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-md p-6 bg-gray-50">
           <input
             id="pdf-upload"

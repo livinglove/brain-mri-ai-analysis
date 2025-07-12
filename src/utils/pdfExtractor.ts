@@ -1,9 +1,18 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import { PatientData, BrainRegion } from '@/types/brainData';
 
-// Set up PDF.js worker - using a more stable CDN
+// Set up PDF.js worker with a more reliable approach
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  // Try to use a local worker first, then fallback to CDN
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.js',
+      import.meta.url,
+    ).toString();
+  } catch {
+    // Fallback to unpkg CDN
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+  }
 }
 
 // Brain region mapping for better recognition
@@ -46,10 +55,11 @@ export async function extractDataFromPDF(file: File): Promise<Partial<PatientDat
     const arrayBuffer = await file.arrayBuffer();
     console.log('File converted to array buffer');
     
-    // Load PDF document with additional options
+    // Load PDF document with simpler options
     const loadingTask = pdfjsLib.getDocument({
       data: arrayBuffer,
-      cMapUrl: '/node_modules/pdfjs-dist/cmaps/',
+      standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@4.0.379/standard_fonts/',
+      cMapUrl: 'https://unpkg.com/pdfjs-dist@4.0.379/cmaps/',
       cMapPacked: true,
     });
     
