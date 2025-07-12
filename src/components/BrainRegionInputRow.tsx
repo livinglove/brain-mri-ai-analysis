@@ -47,7 +47,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       <div className="col-span-2 font-medium text-xs text-left">{region.name}</div>
       
       {/* LH Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1.5">
         <Input
           type="number"
           step="0.01"
@@ -59,7 +59,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* RH Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1.5">
         <Input
           type="number"
           step="0.01"
@@ -71,7 +71,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* Total Volume */}
-      <div className="col-span-2">
+      <div className="col-span-1.5">
         <Input
           type="number"
           step="0.01"
@@ -83,7 +83,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* Normative Value with Age Adjusted Check */}
-      <div className="col-span-2 relative">
+      <div className="col-span-1.5 relative">
         <Input
           type="number"
           step="0.01"
@@ -98,7 +98,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* Standard Deviation */}
-      <div className="col-span-1">
+      <div className="col-span-1.5">
         <Input
           type="number"
           step="0.001"
@@ -110,7 +110,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* Z-Score Display with status */}
-      <div className="col-span-1 text-center">
+      <div className="col-span-2.5 text-center">
         <span className={`text-xs ${zScoreDisplay.color}`}>
           {zScoreDisplay.text}
         </span>

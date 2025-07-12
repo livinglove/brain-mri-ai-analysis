@@ -1,8 +1,10 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import { PatientData, BrainRegion } from '@/types/brainData';
 
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+// Set up PDF.js worker - using a more stable CDN
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+}
 
 // Brain region mapping for better recognition
 const regionNameMap: { [key: string]: string } = {
@@ -42,31 +44,51 @@ export async function extractDataFromPDF(file: File): Promise<Partial<PatientDat
     
     // Convert file to array buffer
     const arrayBuffer = await file.arrayBuffer();
+    console.log('File converted to array buffer');
     
-    // Load PDF document
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    // Load PDF document with additional options
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+      cMapUrl: '/node_modules/pdfjs-dist/cmaps/',
+      cMapPacked: true,
+    });
+    
+    const pdf = await loadingTask.promise;
     console.log(`PDF loaded successfully. Pages: ${pdf.numPages}`);
     
     let fullText = '';
     
     // Extract text from all pages
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ');
-      
-      fullText += pageText + '\n';
+      try {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        const pageText = textContent.items
+          .map((item: any) => item.str || '')
+          .join(' ');
+        
+        fullText += pageText + '\n';
+        console.log(`Extracted text from page ${pageNum}: ${pageText.length} characters`);
+      } catch (pageError) {
+        console.warn(`Error extracting text from page ${pageNum}:`, pageError);
+      }
     }
     
-    console.log(`Extracted text length: ${fullText.length}`);
+    console.log(`Total extracted text length: ${fullText.length}`);
+    
+    if (fullText.trim().length === 0) {
+      throw new Error('No text could be extracted from the PDF');
+    }
     
     return parseExtractedText(fullText);
   } catch (error) {
     console.error('PDF extraction error:', error);
-    throw new Error('Failed to extract data from PDF');
+    if (error instanceof Error) {
+      throw new Error(`Failed to extract data from PDF: ${error.message}`);
+    } else {
+      throw new Error('Failed to extract data from PDF: Unknown error occurred');
+    }
   }
 }
 

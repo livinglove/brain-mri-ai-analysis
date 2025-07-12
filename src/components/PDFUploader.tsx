@@ -90,7 +90,9 @@ const PDFUploader: React.FC<PDFUploaderProps> = ({ onDataExtracted }) => {
       }
     } catch (err) {
       console.error("PDF upload error:", err);
-      toast.error("Error uploading PDF: " + (err as Error).message);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      toast.error(`Error uploading PDF: ${errorMessage}`);
+    } finally {
       setIsLoading(false);
     }
   };
