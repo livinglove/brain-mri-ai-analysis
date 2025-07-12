@@ -44,10 +44,10 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
   return (
     <div className="grid grid-cols-12 gap-3 items-center p-3 border-b border-gray-100 w-full">
       {/* Region Name */}
-      <div className="col-span-2.5 font-medium text-xs text-left">{region.name}</div>
+      <div className="col-span-2 font-medium text-xs text-left">{region.name}</div>
       
       {/* LH Volume */}
-      <div className="col-span-1.5">
+      <div className="col-span-1.75">
         <Input
           type="number"
           step="0.01"
@@ -59,7 +59,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* RH Volume */}
-      <div className="col-span-1.5">
+      <div className="col-span-1.75">
         <Input
           type="number"
           step="0.01"
@@ -71,7 +71,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* Total Volume */}
-      <div className="col-span-1.5">
+      <div className="col-span-1.25">
         <Input
           type="number"
           step="0.01"
@@ -83,7 +83,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* Normative Value with Age Adjusted Check */}
-      <div className="col-span-1.5 relative">
+      <div className="col-span-1.75 relative">
         <Input
           type="number"
           step="0.01"
@@ -98,7 +98,7 @@ const BrainRegionInputRow: React.FC<BrainRegionInputRowProps> = ({
       </div>
       
       {/* Standard Deviation */}
-      <div className="col-span-1">
+      <div className="col-span-1.5">
         <Input
           type="number"
           step="0.001"
