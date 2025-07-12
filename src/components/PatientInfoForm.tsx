@@ -24,7 +24,7 @@ const PatientInfoForm: React.FC<PatientInfoProps> = ({
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
     <div className="space-y-2">
-      <Label htmlFor="patient-id">Patient ID</Label>
+      <Label htmlFor="patient-id" className="h-5">Patient ID</Label>
       <Input
         id="patient-id"
         value={patientId}
@@ -33,9 +33,9 @@ const PatientInfoForm: React.FC<PatientInfoProps> = ({
       />
     </div>
     <div className="space-y-2">
-      <Label htmlFor="age" className="flex items-center gap-2">
+      <Label htmlFor="age" className="flex items-center gap-2 h-5">
         Age
-        {age && <Check className="h-4 w-4 text-green-600" />}
+        {age && <Check className="h-4 w-4 text-green-600 font-bold stroke-[3]" />}
       </Label>
       <Input
         id="age"
@@ -46,7 +46,7 @@ const PatientInfoForm: React.FC<PatientInfoProps> = ({
       />
     </div>
     <div className="space-y-2">
-      <Label htmlFor="sex">Sex</Label>
+      <Label htmlFor="sex" className="h-5">Sex</Label>
       <Select value={sex} onValueChange={val => onSexChange(val as "male" | "female")}>
         <SelectTrigger>
           <SelectValue placeholder="Select sex" />
